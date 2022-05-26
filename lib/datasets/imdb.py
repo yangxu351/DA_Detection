@@ -11,13 +11,15 @@ from __future__ import print_function
 import os
 import os.path as osp
 import PIL
-from model.utils.cython_bbox import bbox_overlaps
+# from lib.model.utils.cython_bbox import bbox_overlaps
+from lib.model.rpn.bbox_transform import bbox_overlaps
 import numpy as np
 import scipy.sparse
-from model.utils.config import cfg
+from lib.model.utils.config import cfg
 import pdb
 
 ROOT_DIR = osp.join(osp.dirname(__file__), '..', '..')
+# print(ROOT_DIR) # /data/users/yang/code/DA_Detection/lib/datasets/../..
 
 class imdb(object):
   """Image database."""
@@ -142,13 +144,15 @@ class imdb(object):
                'gt_classes': self.roidb[i]['gt_classes'],
                'flipped': True}
       self.roidb.append(entry)
-    self._image_index = self._image_index * 2
+    # self._image_index = self._image_index * 2
+    # Tag:
+    self._image_index = [x for x in range(self._image_index[-1]*2)]
 
   def evaluate_recall(self, candidate_boxes=None, thresholds=None,
                       area='all', limit=None):
     """Evaluate detection proposal recall metrics.
 
-    Returns:
+    Returns:\
         results: dictionary of results with keys
             'ar': average recall
             'recalls': vector recalls at each IoU overlap threshold
@@ -197,8 +201,8 @@ class imdb(object):
       if limit is not None and boxes.shape[0] > limit:
         boxes = boxes[:limit, :]
 
-      overlaps = bbox_overlaps(boxes.astype(np.float),
-                               gt_boxes.astype(np.float))
+      overlaps = bbox_overlaps(boxes.astype(np.float32),
+                               gt_boxes.astype(np.float32))
 
       _gt_overlaps = np.zeros((gt_boxes.shape[0]))
       for j in range(gt_boxes.shape[0]):
@@ -246,8 +250,8 @@ class imdb(object):
       if gt_roidb is not None and gt_roidb[i]['boxes'].size > 0:
         gt_boxes = gt_roidb[i]['boxes']
         gt_classes = gt_roidb[i]['gt_classes']
-        gt_overlaps = bbox_overlaps(boxes.astype(np.float),
-                                    gt_boxes.astype(np.float))
+        gt_overlaps = bbox_overlaps(boxes.astype(np.float32),
+                                    gt_boxes.astype(np.float32))
         argmaxes = gt_overlaps.argmax(axis=1)
         maxes = gt_overlaps.max(axis=1)
         I = np.where(maxes > 0)[0]

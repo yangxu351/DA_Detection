@@ -23,6 +23,9 @@ from datasets.cityscape import cityscape
 from datasets.cityscape_car import cityscape_car
 from datasets.foggy_cityscape import foggy_cityscape
 
+from datasets.syn_nwpu import syn_nwpu
+from datasets.real_nwpu import real_nwpu
+
 import numpy as np
 for split in ['train', 'trainval','val','test']:
   name = 'cityscape_{}'.format(split)
@@ -36,6 +39,7 @@ for split in ['train', 'trainval','test']:
 for split in ['train','val']:
   name = 'sim10k_{}'.format(split)
   __sets[name] = (lambda split=split : sim10k(split))
+
 for split in ['train', 'val']:
   name = 'sim10k_cycle_{}'.format(split)
   __sets[name] = (lambda split=split: sim10k_cycle(split))
@@ -63,6 +67,18 @@ for year in ['2007']:
   for split in ['train', 'test']:
     name = 'water_{}'.format(split)
     __sets[name] = (lambda split=split : water(split,year))
+
+    
+
+for split in ['train','val']:
+  dataset = 'syn_nwpu_c1_{}'.format(split).upper()
+  __sets[dataset] = (lambda name=dataset: syn_nwpu(name))
+  # print('__sets',[x for x in __sets.values()])
+
+for split in ['test']:
+  dataset = 'real_nwpu_c1_{}'.format(split).upper()
+  __sets[dataset] = (lambda name=dataset: real_nwpu(name))  
+
 def get_imdb(name):
   """Get an imdb (image database) by name."""
   if name not in __sets:

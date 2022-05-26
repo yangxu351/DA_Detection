@@ -12,6 +12,9 @@ __D = edict()
 # Consumers can get config by:
 #   from fast_rcnn_config import cfg
 cfg_d = __D
+
+__D.DATA_SEED = 17
+
 #
 # Training options
 #with regard to pascal, the directories under the path will be ./VOC2007, ./VOC2012"
@@ -27,6 +30,12 @@ __D.CITYSCAPE_CAR = "/VOC2007"
 __D.CITYSCAPE = "VOC2007"
 __D.FOGGYCITY = "VOC2007"
 
+__D.BASE_DATA_DIR = "/data/users/yang/data"
+__D.DEV_DATA_DIR = "data/real_syn_nwpu_vockit"
+#Tag:
+__D.DATASET = 'SYN_NWPU_C1'
+__D.DATABASE = 'syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6'
+__D.DATASET_T = 'REAL_NWPU_C1'
 
 def _merge_a_into_b(a, b):
   """Merge config dictionary a into config dictionary b, clobbering the
