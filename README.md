@@ -96,3 +96,36 @@ Please cite the following reference if you utilize this repository for your proj
   year={2018}
 }
 ```
+
+
+
+
+Please make sure that
+ -   PATH includes /home/lab/yangDir/cuda-9.0/bin
+ -   LD_LIBRARY_PATH includes /home/lab/yangDir/cuda-9.0/lib64, or, add /home/lab/yangDir/cuda-9.0/lib64 to /etc/ld.so.conf and run ldconfig as root
+
+To uninstall the CUDA Toolkit, run the uninstall script in /home/lab/yangDir/cuda-9.0/bin
+# rm -rf /usr/local/cuda
+# sudo ln -s /home/lab/yangDir/cuda-9.0 /usr/local/cuda
+# export CUDA_PATH=/usr/local/cuda/
+# export CUDA_PATH=/home/lab/yangDir/cuda-9.0
+# export PATH=$CUDA_PATH/bin:$PATH
+# export LD_LIBRARY_PATH=$CUDA_PATH/lib64:$LD_LIBRARY_PATH
+# BACKUP:$PATH
+# /home/lab/anaconda3/bin:/home/lab/anaconda3/condabin:/home/lab/.vscode-server/bin/30d9c6cd9483b2cc586687151bcbcd635f373630/bin/remote-cli:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:
+# https://blog.csdn.net/Mr__George/article/details/106984574
+
+# gcc.bak -> gcc-7
+# gcc -> /usr/bin/gcc-5
+
+# x86_64-linux-gnu-gcc.bak -> gcc-7
+# x86_64-linux-gnu-gcc -> gcc-5
+
+# g++.bak -> g++-7
+# g++ -> /usr/bin/g++-5
+
+# x86_64-linux-gnu-g++.bak -> g++-7
+# x86_64-linux-gnu-g++ -> g++-5
+
+#You may also want to ad the following
+#export C_INCLUDE_PATH=/opt/cuda/include
