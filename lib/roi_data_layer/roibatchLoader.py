@@ -25,7 +25,7 @@ class roibatchLoader(data.Dataset):
     # we make the height of image consistent to trim_height, trim_width
     self.trim_height = cfg.TRAIN.TRIM_HEIGHT
     self.trim_width = cfg.TRAIN.TRIM_WIDTH
-    self.max_num_box = cfg.MAX_NUM_GT_BOXES
+    self.max_num_box = cfg.MAX_NUM_GT_BOXES #tag: change this value
     self.training = training
     self.normalize = normalize
     self.ratio_list = ratio_list
@@ -180,7 +180,6 @@ class roibatchLoader(data.Dataset):
             trim_size = min(data_height, data_width)
             padding_data = torch.FloatTensor(trim_size, trim_size, 3).zero_()
             padding_data = data[0][:trim_size, :trim_size, :]
-            # gt_boxes.clamp_(0, trim_size)
             gt_boxes[:, :4].clamp_(0, trim_size)
             im_info[0, 0] = trim_size
             im_info[0, 1] = trim_size
@@ -189,11 +188,15 @@ class roibatchLoader(data.Dataset):
         # check the bounding box:
         not_keep = (gt_boxes[:,0] == gt_boxes[:,2]) | (gt_boxes[:,1] == gt_boxes[:,3])
         keep = torch.nonzero(not_keep == 0).view(-1)
-
-        gt_boxes_padding = torch.FloatTensor(self.max_num_box, gt_boxes.size(1)).zero_()
+        #tag: https://github.com/jwyang/faster-rcnn.pytorch/issues/291#issuecomment-417986873
+        # we do not need this self.max_num_box, because the num of box is small
+        # gt_boxes_padding = torch.FloatTensor(self.max_num_box, gt_boxes.size(1)).zero_()
+        num_boxes = len(keep)
+        gt_boxes_padding = torch.FloatTensor(num_boxes, gt_boxes.size(1)).zero_()
         if keep.numel() != 0:
             gt_boxes = gt_boxes[keep]
-            num_boxes = min(gt_boxes.size(0), self.max_num_box)
+            #tag: yang comment
+            # num_boxes = min(gt_boxes.size(0), self.max_num_box)
             gt_boxes_padding[:num_boxes,:] = gt_boxes[:num_boxes]
         else:
             num_boxes = 0

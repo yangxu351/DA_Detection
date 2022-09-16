@@ -24,11 +24,14 @@ def prepare_roidb(imdb):
          for i in range(imdb.num_images)]
          
   for i in range(len(imdb.image_index)):
+    # if i == 360:
+    #   print('-------i-------', i)
     roidb[i]['img_id'] = imdb.image_id_at(i)
     roidb[i]['image'] = imdb.image_path_at(i)
     #if not (imdb.name.startswith('coco')):
     roidb[i]['width'] = sizes[i][0]
     roidb[i]['height'] = sizes[i][1]
+    
     # need gt_overlaps as a dense array for argmax
     gt_overlaps = roidb[i]['gt_overlaps'].toarray()
     # max overlap with gt over classes (columns)
@@ -53,6 +56,7 @@ def rank_roidb_ratio(roidb):
     
     ratio_list = []
     for i in range(len(roidb)):
+      
       width = roidb[i]['width']
       height = roidb[i]['height']
       ratio = width / float(height)
@@ -81,7 +85,7 @@ def filter_roidb(roidb):
         del roidb[i]
         i -= 1
       i += 1
-
+      
     print('after filtering, there are %d images...' % (len(roidb)))
     return roidb
 
@@ -89,12 +93,12 @@ def combined_roidb(imdb_names, training=True):
   """
   Combine multiple roidbs
   """
-
+  print('imdb_names', imdb_names)
   def get_training_roidb(imdb):
     """Returns a roidb (Region of Interest database) for use in training."""
     if cfg.TRAIN.USE_FLIPPED:
       print('Appending horizontally-flipped training examples...')
-      imdb.append_flipped_images()
+      imdb.append_flipped_images() # double image_index
       print('done')
 
     print('Preparing training data...')
@@ -112,9 +116,11 @@ def combined_roidb(imdb_names, training=True):
     print('Set proposal method: {:s}'.format(cfg.TRAIN.PROPOSAL_METHOD))
     roidb = get_training_roidb(imdb)
     return roidb
-  #print(imdb_names.split('+'))
-  roidbs = [get_roidb(s) for s in imdb_names.split('+')]
-  roidb = roidbs[0]
+  # print(imdb_names.split('+'))
+  # roidbs = [get_roidb(s) for s in imdb_names.split('+')]
+  #TAG: ## Yang.xu
+  roidbs = [get_roidb(imdb_names)] 
+  roidb = roidbs[0] # dict len 180
 
   if len(roidbs) > 1:
     for r in roidbs[1:]:
