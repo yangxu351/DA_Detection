@@ -1,21 +1,29 @@
 import argparse
 from model.utils.config import cfg, cfg_from_file, cfg_from_list
-
+from lib.datasets.config_dataset import cfg_d
 
 def parse_args():
     """
     Parse input arguments
     """
     parser = argparse.ArgumentParser(description='Train a Fast R-CNN network')
+    ###########################################################=========data set
     parser.add_argument('--dataset', dest='dataset',
-                        help='source training dataset',
-                        default='pascal_voc_0712', type=str)
+                        help='source training dataset: SYN_NWPU_C1',
+                        default=cfg_d.DATASET, type=str)
+
+    parser.add_argument('--database', dest='database',
+                        help='source training database: syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6',
+                        default=cfg_d.DATABASE, type=str)      
+
     parser.add_argument('--dataset_t', dest='dataset_t',
-                        help='target training dataset',
-                        default='clipart', type=str)
+                        help='target training dataset:REAL_NWPU_C1',
+                        default=cfg_d.DATASET_T, type=str)
+    ###########################################################=========end data set
+
     parser.add_argument('--net', dest='net',
                         help='vgg16, res101 res50',
-                        default='res101', type=str)
+                        default='res50', type=str)
     parser.add_argument('--start_epoch', dest='start_epoch',
                         help='starting epoch',
                         default=1, type=int)
@@ -27,22 +35,29 @@ def parse_args():
                         default=5, type=float)
     parser.add_argument('--disp_interval', dest='disp_interval',
                         help='number of iterations to display',
-                        default=100, type=int)
+                        default=10, type=int)
     parser.add_argument('--checkpoint_interval', dest='checkpoint_interval',
-                        help='number of iterations to display',
-                        default=10000, type=int)
-
+                        help='number of iterations to display 10000',
+                        default=100, type=int)
+    ###########################################################=========dir
     parser.add_argument('--save_dir', dest='save_dir',
                         help='directory to save models', default="models",
                         type=str)
+    parser.add_argument('--log_dir', dest='log_dir',
+                        help='directory to save log', default="logs",
+                        type=str)
+    parser.add_argument('--image_dir', dest='image_dir',
+                        help='directory to load images for demo',
+                        default="images")  #??????????                     
+    ###########################################################=========end dir
     parser.add_argument('--load_name', dest='load_name',
                         help='path to load models', default="models",
                         type=str)
     parser.add_argument('--nw', dest='num_workers',
                         help='number of worker to load data',
-                        default=0, type=int)
+                        default=4, type=int)
     parser.add_argument('--cuda', dest='cuda',
-                        help='whether use CUDA',
+                        help='whether use CUDA', default=True,
                         action='store_true')
 
     parser.add_argument('--detach', dest='detach',
@@ -51,10 +66,10 @@ def parse_args():
     parser.add_argument('--ef', dest='ef',
                         help='whether use exponential focal loss',
                         action='store_true')
-    parser.add_argument('--lc', dest='lc',
+    parser.add_argument('--lc', dest='lc', default=True,
                         help='whether use context vector for pixel level',
                         action='store_true')
-    parser.add_argument('--gc', dest='gc',
+    parser.add_argument('--gc', dest='gc', default=True,
                         help='whether use context vector for global level',
                         action='store_true')
     parser.add_argument('--ls', dest='large_scale',
@@ -62,7 +77,7 @@ def parse_args():
                         action='store_true')
     parser.add_argument('--mGPUs', dest='mGPUs',
                         help='whether use multiple GPUs',
-                        action='store_true')
+                        action='store_true', default=False)
     parser.add_argument('--bs', dest='batch_size',
                         help='batch_size',
                         default=1, type=int)
@@ -75,8 +90,8 @@ def parse_args():
                         help='training optimizer',
                         default="sgd", type=str)
     parser.add_argument('--lr', dest='lr',
-                        help='starting learning rate',
-                        default=0.001, type=float)
+                        help='starting learning rate 0.001',
+                        default=0.0001, type=float)
     parser.add_argument('--eta', dest='eta',
                         help='trade-off parameter between detection loss and domain-alignment loss. Used for Car datasets',
                         default=0.1, type=float)
@@ -105,9 +120,7 @@ def parse_args():
     parser.add_argument('--use_tfb', dest='use_tfboard',
                         help='whether use tensorboard',
                         action='store_true')
-    parser.add_argument('--image_dir', dest='image_dir',
-                        help='directory to load images for demo',
-                        default="images")
+    
     args = parser.parse_args()
     return args
 
@@ -158,7 +171,13 @@ def set_dataset_args(args, test=False):
             args.imdb_name = "sim10k_cycle_train"
             args.imdbval_name = "sim10k_cycle_train"
             args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '30']
-
+        # tag: yang adds
+        elif args.dataset == "SYN_NWPU_C1":
+            args.imdb_name = args.dataset + "_TRAIN"
+            args.imdbval_name =args.dataset + "_VAL"
+            # args.imdb_name_cycle = "sim10k_cycle_train"  # "voc_cyclewater_2007_trainval+voc_cyclewater_2012_trainval"
+            args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '30']
+        
         ## cityscape dataset for only car classes.
         # elif args.dataset == "cityscape_kitti":
         #     args.imdb_name = "cityscape_kitti_trainval"
@@ -196,6 +215,12 @@ def set_dataset_args(args, test=False):
             args.imdbval_name_target = "foggy_cityscape_trainval"
             args.set_cfgs_target = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES',
                                     '30']
+        # tag: yang adds
+        elif args.dataset_t == "REAL_NWPU_C1":
+            args.imdb_name_target = args.dataset_t + "_TEST"
+            args.imdbval_name_target = args.dataset_t + "_TEST"
+            args.set_cfgs_target = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES',
+                                    '20']                            
     else:
         if args.dataset == "pascal_voc":
             args.imdb_name = "voc_2007_trainval"
