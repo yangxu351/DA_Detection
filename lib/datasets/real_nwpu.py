@@ -53,7 +53,7 @@ class real_nwpu(imdb):
         self._class_set = image_set[:cix].upper() # 'REAL_NWPU_C1'
         
         self._year = '2022'
-        self._image_set = image_set[cix+1:] # test
+        self._image_set = image_set[cix+1:].lower() # test
         self._devkit_path = os.path.join(cfg_d.DEV_DATA_DIR, self._class_set) #self._get_default_path() if devkit_path is None \
             #else devkit_path
         self._data_path = os.path.join(cfg_d.BASE_DATA_DIR, self._class_set)
@@ -101,16 +101,29 @@ class real_nwpu(imdb):
         """
         Return the absolute path to image i in the image sequence.
         """
-        image_path = self._image_arr[i]
-        assert os.path.exists(image_path), \
-            'Path does not exist: {}'.format(image_path)
-        return image_path
+        # image_path = self._image_arr[i]
+        # assert os.path.exists(image_path), \
+        #     'Path does not exist: {}'.format(image_path)
+        # return image_path
+        return self.image_path_from_index(self._image_index[i])
 
     def image_id_at(self, i):
         """
         Return the absolute path to image i in the image sequence.
         """
         return i
+    
+    def image_path_from_index(self, index):
+        """
+        Construct an image path from the image's "index" identifier.
+        """
+        # image_path = os.path.join(self._img_dir, index)
+        # assert os.path.exists(image_path), \
+        #     'Path does not exist: {}'.format(image_path)
+        img_set_file = self.get_img_set_file()
+        df_img_path = pd.read_csv(img_set_file, header=None)
+        image_path = df_img_path.iloc[index][0]
+        return image_path
     
     def get_img_set_file(self):
         img_set_file = os.path.join(self._devkit_path,  
@@ -139,7 +152,7 @@ class real_nwpu(imdb):
         # print('img', df_img.head())
         df_lbl = pd.read_csv(lbl_set_file, header=None)
         # print('lbl', df_lbl.head())
-        return df_img.index, df_lbl.index
+        return list(df_img.index), list(df_lbl.index)
 
     def _load_image_label_arr(self):
         """
@@ -285,10 +298,15 @@ class real_nwpu(imdb):
         for ix, obj in enumerate(objs):
             bbox = obj.find('bndbox')
             # Make pixel indexes 0-based
-            x1 = float(bbox.find('xmin').text) #- 1
-            y1 = float(bbox.find('ymin').text) #- 1
-            x2 = float(bbox.find('xmax').text) #- 1
-            y2 = float(bbox.find('ymax').text) #- 1
+            # x1 = float(bbox.find('xmin').text) - 1
+            # y1 = float(bbox.find('ymin').text) - 1
+            # x2 = float(bbox.find('xmax').text) - 1
+            # y2 = float(bbox.find('ymax').text) - 1
+            # tag: yang changed https://blog.csdn.net/forest_world/article/details/106034880
+            x1 = float(bbox.find('xmin').text)
+            y1 = float(bbox.find('ymin').text)
+            x2 = float(bbox.find('xmax').text)
+            y2 = float(bbox.find('ymax').text)
 
             diffc = obj.find('difficult')
             difficult = 0 if diffc == None else int(diffc.text)
@@ -306,6 +324,9 @@ class real_nwpu(imdb):
             overlaps[count, cls] = 1.0
             seg_areas[count] = (x2 - x1 + 1) * (y2 - y1 + 1)
             count += 1
+            if np.any(np.max(boxes, axis=1)==608):
+                print('real boxes max over 608')
+                exit(0)
         overlaps = scipy.sparse.csr_matrix(overlaps)
         return {'boxes': boxes,
                 'gt_classes': gt_classes,

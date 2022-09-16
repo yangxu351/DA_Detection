@@ -60,10 +60,10 @@ def generate_xml_from_real_annotation(args, data_cat='REAL_NWPU_C1'):
             df = pd.read_csv(f, header=None, sep=' ').to_numpy()
             print(df.shape)
             #xcycwh are float relative values, xminyminxmaxymax are absolute values
-            min_ws = np.round((df[:, 1] - df[:, 3]/2)*args.tile_size).astype(np.int32)
-            min_hs = np.round((df[:, 2] - df[:, 4]/2)*args.tile_size).astype(np.int32)
-            max_ws = np.round((df[:, 1] + df[:, 3]/2)*args.tile_size).astype(np.int32)
-            max_hs = np.round((df[:, 2] + df[:, 4]/2)*args.tile_size).astype(np.int32)
+            min_ws = np.clip((df[:, 1] - df[:, 3]/2)*args.tile_size, 0, args.tile_size-1).astype(np.int32)
+            min_hs = np.clip((df[:, 2] - df[:, 4]/2)*args.tile_size, 0, args.tile_size-1).astype(np.int32)
+            max_ws = np.clip((df[:, 1] + df[:, 3]/2)*args.tile_size, 0, args.tile_size-1).astype(np.int32)
+            max_hs = np.clip((df[:, 2] + df[:, 4]/2)*args.tile_size, 0, args.tile_size-1).astype(np.int32)
         
         orig_img = Image.open(img_f)
         image_width = orig_img.width
@@ -177,8 +177,8 @@ def create_data_combine_real_C_val_bkg(seed=17, data_cats=['real_nwpu_c1','real_
     data_dir = args.workdir_data_txt.format(data_cats[0])
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
-    test_img_txt = open(os.path.join(data_dir, 'TEST_img_seed{}.txt'.format(seed)), 'w')
-    test_lbl_txt = open(os.path.join(data_dir, 'TEST_lbl_seed{}.txt'.format(seed)), 'w')
+    test_img_txt = open(os.path.join(data_dir, 'test_img_seed{}.txt'.format(seed)), 'w')
+    test_lbl_txt = open(os.path.join(data_dir, 'test_lbl_seed{}.txt'.format(seed)), 'w')
     
     for data_cat in data_cats:
         data_cat = data_cat.upper()
@@ -207,8 +207,8 @@ def create_data_combine_real_C_val_bkg(seed=17, data_cats=['real_nwpu_c1','real_
     test_lbl_txt.close()
 
     data_txt = open(os.path.join(data_dir, 'data_list.data'), 'w')
-    data_txt.write(f"test_img_file={os.path.join(data_dir, f'TEST_img_seed{seed}.txt')}\n")
-    data_txt.write(f"test_lbl_file={os.path.join(data_dir, f'TEST_lbl_seed{seed}.txt')}\n")
+    data_txt.write(f"test_img_file={os.path.join(data_dir, f'test_img_seed{seed}.txt')}\n")
+    data_txt.write(f"test_lbl_file={os.path.join(data_dir, f'test_lbl_seed{seed}.txt')}\n")
     data_txt.write(f'class_set={data_cat}')
     data_txt.close()
 

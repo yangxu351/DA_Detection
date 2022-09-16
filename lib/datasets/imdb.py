@@ -123,14 +123,18 @@ class imdb(object):
       oldx2 = boxes[:, 2].copy()
       boxes[:, 0] = widths[i] - oldx2 - 1
       boxes[:, 2] = widths[i] - oldx1 - 1
+      #tag: yang adds from https://blog.csdn.net/forest_world/article/details/106034880
+      for b in range(len(boxes)):
+        if boxes[b][2]< boxes[b][0]:
+          boxes[b][0] = 0
 
       try:
         assert (boxes[:, 2] >= boxes[:, 0]).all()
       except:
         print('error')
         print(boxes[:, 2] >= boxes[:, 0])
-        print(boxes)
-        print(widths[i])
+        print('boxes', boxes)
+        print('widths[i]', widths[i])
       if 'seg_map' in self.roidb[i].keys():
         seg_map = self.roidb[i]['seg_map'][::-1, :]
         entry = {'boxes': boxes,
@@ -144,9 +148,9 @@ class imdb(object):
                'gt_classes': self.roidb[i]['gt_classes'],
                'flipped': True}
       self.roidb.append(entry)
-    # self._image_index = self._image_index * 2
-    # Tag:
-    self._image_index = [x for x in range(self._image_index[-1]*2)]
+    
+    # [1,2,3] ----> [1,2,3,1,2,3]
+    self._image_index = self._image_index * 2 
 
   def evaluate_recall(self, candidate_boxes=None, thresholds=None,
                       area='all', limit=None):

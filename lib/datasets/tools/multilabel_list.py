@@ -26,7 +26,8 @@ def load_pascal_annotation(ref_path, index):
     objs = tree.findall('object')
     obj_list = []
     for ix, obj in enumerate(objs):
-        cls = obj.find('name').text.lower().strip()
+        cls = obj.find('name').text.strip()
+        # cls = obj.find('name').text.lower().strip()
         obj_list.append(cls)
     return list(set(obj_list))
 

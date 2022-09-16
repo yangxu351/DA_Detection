@@ -64,7 +64,7 @@ class syn_nwpu(imdb):
                          'NWPU_C1') #, # one pair of engines mounted at tail 
                         #  'NC2') # two pairs of engines under wings 
         self._class_to_ind = dict(zip(self.classes, xrange(self.num_classes)))
-        self._image_ext = '.png'
+        self._image_ext = IMG_SUFFIX # '.png'
         self._image_index, self._label_index = self._load_image_label_set_index()
         self._image_arr, self._label_arr = self._load_image_label_arr()
         print('_image_index', len(self._image_index))
@@ -126,7 +126,7 @@ class syn_nwpu(imdb):
         # print('lbl', df_lbl.head())
         assert df_img.shape==df_lbl.shape, "img shape not equal to the lbl shape"
 
-        return df_img.index, df_lbl.index
+        return list(df_img.index), list(df_lbl.index)
 
     def _load_image_label_arr(self):
         """
@@ -145,8 +145,7 @@ class syn_nwpu(imdb):
         """
         Return the absolute path to image i in the image sequence.
         """
-        # return self.image_path_from_index(self._image_index[i])
-        return self._image_arr[i]
+        return self.image_path_from_index(self._image_index[i])
 
     def image_id_at(self, i):
         """
@@ -158,9 +157,12 @@ class syn_nwpu(imdb):
         """
         Construct an image path from the image's "index" identifier.
         """
-        image_path = os.path.join(self._img_dir, index)
-        assert os.path.exists(image_path), \
-            'Path does not exist: {}'.format(image_path)
+        # image_path = os.path.join(self._img_dir, index)
+        # assert os.path.exists(image_path), \
+        #     'Path does not exist: {}'.format(image_path)
+        img_set_file = self.get_img_set_file()
+        df_img_path = pd.read_csv(img_set_file, header=None)
+        image_path = df_img_path.iloc[index][0]
         return image_path
 
     # def _load_image_set_index(self):
@@ -193,6 +195,7 @@ class syn_nwpu(imdb):
         This function loads/saves from/to a cache file to speed up future calls.
         """
         cache_file = os.path.join(self.cache_path, self.name + '_gt_roidb.pkl')
+        # tag: comment 
         if os.path.exists(cache_file):
             with open(cache_file, 'rb') as fid:
                 roidb = pickle.load(fid)
@@ -216,7 +219,6 @@ class syn_nwpu(imdb):
         """
         cache_file = os.path.join(self.cache_path,
                                   self.name + '_selective_search_roidb.pkl')
-
         if os.path.exists(cache_file):
             with open(cache_file, 'rb') as fid:
                 roidb = pickle.load(fid)
@@ -283,17 +285,17 @@ class syn_nwpu(imdb):
         objs = tree.findall('object')
 
         num_objs = len(objs)
-        count = 0
-        for ix, obj in enumerate(objs):
-            bboxe = obj.find('bndbox')
-            try:
-                # cls = self._class_to_ind[obj.find('name').text.lower().strip()]
-                cls = self._class_to_ind[obj.find('name').text.strip()]
-                count += 1
-            except:
-                continue
+        # count = 0
+        # for ix, obj in enumerate(objs):
+        #     bboxe = obj.find('bndbox')
+        #     try:
+        #         # cls = self._class_to_ind[obj.find('name').text.lower().strip()]
+        #         cls = self._class_to_ind[obj.find('name').text.strip()]
+        #         count += 1
+        #     except:
+        #         continue
 
-        num_objs = count  # len(objs)
+        # num_objs = count  # len(objs)
         boxes = np.zeros((num_objs, 4), dtype=np.uint16)
         gt_classes = np.zeros((num_objs), dtype=np.int32)
         overlaps = np.zeros((num_objs, self.num_classes), dtype=np.float32)
@@ -311,10 +313,16 @@ class syn_nwpu(imdb):
         for ix, obj in enumerate(objs):
             bbox = obj.find('bndbox')
             # Make pixel indexes 0-based
-            x1 = float(bbox.find('xmin').text) - 1
-            y1 = float(bbox.find('ymin').text) - 1
-            x2 = float(bbox.find('xmax').text) - 1
-            y2 = float(bbox.find('ymax').text) - 1
+            # x1 = float(bbox.find('xmin').text) - 1
+            # y1 = float(bbox.find('ymin').text) - 1
+            # x2 = float(bbox.find('xmax').text) - 1
+            # y2 = float(bbox.find('ymax').text) - 1
+            # tag: yang changed https://blog.csdn.net/forest_world/article/details/106034880
+            x1 = float(bbox.find('xmin').text)
+            y1 = float(bbox.find('ymin').text)
+            x2 = float(bbox.find('xmax').text)
+            y2 = float(bbox.find('ymax').text)
+
 
             diffc = obj.find('difficult')
             difficult = 0 if diffc == None else int(diffc.text)
@@ -327,11 +335,15 @@ class syn_nwpu(imdb):
                 continue
             #seg_map[x1:x2, y1:y2] = cls
             ishards[count] = difficult
+
             boxes[count, :] = [x1, y1, x2, y2]
             gt_classes[count] = cls
             overlaps[count, cls] = 1.0
             seg_areas[count] = (x2 - x1 + 1) * (y2 - y1 + 1)
             count += 1
+            if np.any(np.max(boxes, axis=1)==608):
+                print('syn boxes max over 608')
+                exit(0)
         overlaps = scipy.sparse.csr_matrix(overlaps)
         return {'boxes': boxes,
                 'gt_classes': gt_classes,

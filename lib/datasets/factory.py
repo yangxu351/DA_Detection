@@ -69,7 +69,7 @@ for year in ['2007']:
     __sets[name] = (lambda split=split : water(split,year))
 
     
-
+ # tag: yang adds
 for split in ['train','val']:
   dataset = 'syn_nwpu_c1_{}'.format(split).upper()
   __sets[dataset] = (lambda name=dataset: syn_nwpu(name))
