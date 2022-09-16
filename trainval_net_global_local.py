@@ -19,13 +19,13 @@ import _init_paths
 import torch
 from torch.autograd import Variable
 import torch.nn as nn
-from roi_data_layer.roidb import combined_roidb
-from roi_data_layer.roibatchLoader import roibatchLoader
-from model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
-from model.utils.net_utils import weights_normal_init, save_net, load_net, \
+from lib.roi_data_layer.roidb import combined_roidb
+from lib.roi_data_layer.roibatchLoader import roibatchLoader
+from lib.model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
+from lib.model.utils.net_utils import weights_normal_init, save_net, load_net, \
     adjust_learning_rate, save_checkpoint, clip_gradient, FocalLoss, sampler, calc_supp, EFocalLoss
 
-from model.utils.parser_func import parse_args, set_dataset_args
+from lib.model.utils.parser_func import parse_args, set_dataset_args
 
 if __name__ == '__main__':
 
@@ -46,12 +46,20 @@ if __name__ == '__main__':
     # torch.backends.cudnn.benchmark = True
     if torch.cuda.is_available() and not args.cuda:
         print("WARNING: You have a CUDA device, so you should probably run with --cuda")
+    
+    # print(torch.cuda.device_count())
+    # print(torch.cuda.get_device_name())
+    # print(torch.cuda.current_device())
+    torch.cuda.current_device()
+    torch.cuda._initialized = True
+    # print('----CUDA--------', )
 
     # train set
     # -- Note: Use validation set and disable the flipped to enable faster loading.
     cfg.TRAIN.USE_FLIPPED = True
     cfg.USE_GPU_NMS = args.cuda
     # source dataset
+    print('----args.imdb_name', args.imdb_name)
     imdb, roidb, ratio_list, ratio_index = combined_roidb(args.imdb_name)
     train_size = len(roidb)
     # target dataset
@@ -61,7 +69,7 @@ if __name__ == '__main__':
     print('{:d} source roidb entries'.format(len(roidb)))
     print('{:d} target roidb entries'.format(len(roidb_t)))
 
-    output_dir = args.save_dir + "/" + args.net + "/" + args.dataset
+    output_dir = os.path.join(args.save_dir, args.net, args.dataset, args.database)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -98,8 +106,8 @@ if __name__ == '__main__':
         cfg.CUDA = True
 
     # initilize the network here.
-    from model.faster_rcnn.vgg16_global_local import vgg16
-    from model.faster_rcnn.resnet_global_local import resnet
+    from lib.model.faster_rcnn.vgg16_global_local import vgg16
+    from lib.model.faster_rcnn.resnet_global_local import resnet
 
     if args.net == 'vgg16':
         fasterRCNN = vgg16(imdb.classes, pretrained=True, class_agnostic=args.class_agnostic, lc=args.lc,
@@ -108,7 +116,7 @@ if __name__ == '__main__':
         fasterRCNN = resnet(imdb.classes, 101, pretrained=True, class_agnostic=args.class_agnostic,
                             lc=args.lc, gc=args.gc)
     elif args.net == 'res50':
-        fasterRCNN = resnet(imdb.classes, 50, pretrained=True, class_agnostic=args.class_agnostic, context=args.context)
+        fasterRCNN = resnet(imdb.classes, 50, pretrained=True, class_agnostic=args.class_agnostic, lc=args.lc, gc=args.gc)#, context=args.context
 
     else:
         print("network is not defined")
@@ -153,7 +161,10 @@ if __name__ == '__main__':
 
     if args.mGPUs:
         fasterRCNN = nn.DataParallel(fasterRCNN)
-    iters_per_epoch = int(10000 / args.batch_size)
+    # iters_per_epoch = int(10000 / args.batch_size)
+    # tag:yang.xu
+    iters_per_epoch = int(train_size / args.batch_size)
+    
     if args.ef:
         FL = EFocalLoss(class_num=2, gamma=args.gamma)
     else:
@@ -161,8 +172,10 @@ if __name__ == '__main__':
 
     if args.use_tfboard:
         from tensorboardX import SummaryWriter
-
-        logger = SummaryWriter("logs")
+        log_dir = os.path.join(args.log_dir, args.net, args.dataset, args.database)
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+        logger = SummaryWriter(log_dir)
     count_iter = 0
     for epoch in range(args.start_epoch, args.max_epochs + 1):
         # setting to train mode
@@ -203,7 +216,6 @@ if __name__ == '__main__':
                    + RCNN_loss_cls.mean() + RCNN_loss_bbox.mean()
             loss_temp += loss.item()
 
-
             # domain label
             domain_s = Variable(torch.zeros(out_d.size(0)).long().cuda())
             # global alignment loss
@@ -223,10 +235,13 @@ if __name__ == '__main__':
             dloss_t = 0.5 * FL(out_d, domain_t)
             # local alignment loss
             dloss_t_p = 0.5 * torch.mean((1 - out_d_pixel) ** 2)
-            if args.dataset == 'sim10k':
-                loss += (dloss_s + dloss_t + dloss_s_p + dloss_t_p) * args.eta
-            else:
-                loss += (dloss_s + dloss_t + dloss_s_p + dloss_t_p)
+            # if args.dataset == 'SYN_NWPU_C1':
+            #     loss += (dloss_s + dloss_t + dloss_s_p + dloss_t_p) * args.eta
+            # else:
+            #     loss += (dloss_s + dloss_t + dloss_s_p + dloss_t_p)
+            # tag: fixme
+            loss += (dloss_s + dloss_t + dloss_s_p + dloss_t_p)
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

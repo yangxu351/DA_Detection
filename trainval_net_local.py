@@ -58,10 +58,10 @@ if __name__ == '__main__':
     print('{:d} roidb entries'.format(len(roidb)))
     # print('{:d} roidb entries'.format(len(roidb)))
 
-    output_dir = args.save_dir + "/" + args.net + "/" + args.dataset
+    output_dir = os.path.join(args.save_dir, args.net, args.dataset, args.database)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-
+    
     sampler_batch = sampler(train_size, args.batch_size)
     sampler_batch_t = sampler(train_size_t, args.batch_size)
 
@@ -105,7 +105,9 @@ if __name__ == '__main__':
     elif args.net == 'res101':
         fasterRCNN = resnet(imdb.classes, 101, pretrained=True, class_agnostic=args.class_agnostic,
                             lc=args.lc)
-
+    elif args.net == 'res50':
+        fasterRCNN = resnet(imdb.classes, 50, pretrained=True, class_agnostic=args.class_agnostic,
+                            lc=args.lc)
     else:
         print("network is not defined")
         pdb.set_trace()
@@ -160,8 +162,10 @@ if __name__ == '__main__':
 
     if args.use_tfboard:
         from tensorboardX import SummaryWriter
-
-        logger = SummaryWriter("logs")
+        log_dir = os.path.join(args.log_dir, args.net, args.dataset, args.database)
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+        logger = SummaryWriter(log_dir)
     count_iter = 0
     for epoch in range(args.start_epoch, args.max_epochs + 1):
         # setting to train mode
@@ -210,8 +214,7 @@ if __name__ == '__main__':
             out_d_pixel = fasterRCNN(im_data, im_info, gt_boxes, num_boxes, target=True)
             # backward
             dloss_t_p = torch.mean((1 - out_d_pixel) ** 2) * 0.5
-            if args.dataset == 'sim10k':
-
+            if args.dataset == 'SYN_NWPU_C1':#sim10k
                 loss += (dloss_s_p + dloss_t_p) * args.eta  # + 0.5*(diff_t + diff_s)
             else:
                 loss += (dloss_s_p + dloss_t_p)
@@ -259,7 +262,8 @@ if __name__ == '__main__':
                                        (epoch - 1) * iters_per_epoch + step)
 
                 loss_temp = 0
-                start = time.time()
+                # start = time.time()
+                # start = time.strftime("%Y_%m_%d_%H_%M_%S")
         save_name = os.path.join(output_dir,
                                  'local_target_{}_eta_{}_efocal_{}_local_context_{}_gamma_{}_session_{}_epoch_{}_step_{}.pth'.format(
                                      args.dataset_t, args.eta, args.ef,
