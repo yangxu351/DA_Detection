@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
     print('Using config:')
     pprint.pprint(cfg)
-
+    device = torch.cuda(args.device)
     cfg.TRAIN.USE_FLIPPED = False
     imdb, roidb, ratio_list, ratio_index = combined_roidb(args.imdbval_name, False)
     imdb.competition_mode(on=True)
@@ -91,10 +91,10 @@ if __name__ == '__main__':
 
     # ship to cuda
     if args.cuda:
-        im_data = im_data.cuda()
-        im_info = im_info.cuda()
-        num_boxes = num_boxes.cuda()
-        gt_boxes = gt_boxes.cuda()
+        im_data = im_data.cuda(device)
+        im_info = im_info.cuda(device)
+        num_boxes = num_boxes.cuda(device)
+        gt_boxes = gt_boxes.cuda(device)
 
     # make variable
     im_data = Variable(im_data)
@@ -106,7 +106,7 @@ if __name__ == '__main__':
         cfg.CUDA = True
 
     if args.cuda:
-        fasterRCNN.cuda()
+        fasterRCNN.cuda(device)
 
     start = time.time()
     max_per_image = 100
@@ -157,12 +157,12 @@ if __name__ == '__main__':
             if cfg.TRAIN.BBOX_NORMALIZE_TARGETS_PRECOMPUTED:
                 # Optionally normalize targets by a precomputed mean and stdev
                 if args.class_agnostic:
-                    box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).cuda() \
-                                 + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).cuda()
+                    box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).cuda(device) \
+                                 + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).cuda(device)
                     box_deltas = box_deltas.view(1, -1, 4)
                 else:
-                    box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).cuda() \
-                                 + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).cuda()
+                    box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).cuda(device) \
+                                 + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).cuda(device)
                     box_deltas = box_deltas.view(1, -1, 4 * len(imdb.classes))
 
             pred_boxes = bbox_transform_inv(boxes, box_deltas, 1)
