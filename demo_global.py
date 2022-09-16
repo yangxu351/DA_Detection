@@ -23,6 +23,10 @@ import torch.optim as optim
 import torchvision.transforms as transforms
 import torchvision.datasets as dset
 from scipy.misc import imread
+
+import sys
+sys.path.append('./lib')
+
 from roi_data_layer.roidb import combined_roidb
 from roi_data_layer.roibatchLoader import roibatchLoader
 from model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
