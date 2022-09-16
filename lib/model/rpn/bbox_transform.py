@@ -34,7 +34,7 @@ def bbox_transform(ex_rois, gt_rois):
     return targets
 
 def bbox_transform_batch(ex_rois, gt_rois):
-
+    '''bbox2loc https://www.cnblogs.com/kerwins-AC/p/9752679.html '''
     if ex_rois.dim() == 2:
         ex_widths = ex_rois[:, 2] - ex_rois[:, 0] + 1.0
         ex_heights = ex_rois[:, 3] - ex_rois[:, 1] + 1.0
@@ -206,9 +206,9 @@ def bbox_overlaps_batch(anchors, gt_boxes):
             torch.max(boxes[:,:,:,1], query_boxes[:,:,:,1]) + 1)
         ih[ih < 0] = 0
         ua = anchors_area + gt_boxes_area - (iw * ih)
-        overlaps = iw * ih / ua
+        overlaps = iw * ih / ua # [1, 3938, 20]
 
-        # mask the overlap here.
+        # mask the overlap here. N=3938, K=cfg.MAX_NUM_GT_BOXES
         overlaps.masked_fill_(gt_area_zero.view(batch_size, 1, K).expand(batch_size, N, K), 0)
         overlaps.masked_fill_(anchors_area_zero.view(batch_size, N, 1).expand(batch_size, N, K), -1)
 

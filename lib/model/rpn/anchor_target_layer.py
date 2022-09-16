@@ -95,7 +95,7 @@ class _AnchorTargetLayer(nn.Module):
         bbox_inside_weights = gt_boxes.new(batch_size, inds_inside.size(0)).zero_()
         bbox_outside_weights = gt_boxes.new(batch_size, inds_inside.size(0)).zero_()
 
-        overlaps = bbox_overlaps_batch(anchors, gt_boxes)
+        overlaps = bbox_overlaps_batch(anchors, gt_boxes) # [1, 3938, cfg.MAX_NUM_GT_BOXES]
 
         max_overlaps, argmax_overlaps = torch.max(overlaps, 2)
         gt_max_overlaps, _ = torch.max(overlaps, 1)
@@ -132,8 +132,8 @@ class _AnchorTargetLayer(nn.Module):
                 disable_inds = fg_inds[rand_num[:fg_inds.size(0)-num_fg]]
                 labels[i][disable_inds] = -1
 
-#           num_bg = cfg.TRAIN.RPN_BATCHSIZE - sum_fg[i]
-            num_bg = cfg.TRAIN.RPN_BATCHSIZE - torch.sum((labels == 1).int(), 1)[i]
+            num_bg = cfg.TRAIN.RPN_BATCHSIZE - sum_fg[i]
+            # num_bg = cfg.TRAIN.RPN_BATCHSIZE - torch.sum((labels == 1).int(), 1)[i]
 
             # subsample negative labels if we have too many
             if sum_bg[i] > num_bg:
@@ -147,7 +147,7 @@ class _AnchorTargetLayer(nn.Module):
         offset = torch.arange(0, batch_size)*gt_boxes.size(1)
 
         argmax_overlaps = argmax_overlaps + offset.view(batch_size, 1).type_as(argmax_overlaps)
-        bbox_targets = _compute_targets_batch(anchors, gt_boxes.view(-1,5)[argmax_overlaps.view(-1), :].view(batch_size, -1, 5))
+        bbox_targets = _compute_targets_batch(anchors, gt_boxes.view(-1,5)[argmax_overlaps.view(-1), :].view(batch_size, -1, 5)) # bbox2loc https://www.cnblogs.com/kerwins-AC/p/9752679.html
 
         # use a single value instead of 4 values for easy index.
         bbox_inside_weights[labels==1] = cfg.TRAIN.RPN_BBOX_INSIDE_WEIGHTS[0]
