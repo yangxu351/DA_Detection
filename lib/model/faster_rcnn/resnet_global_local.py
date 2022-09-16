@@ -39,10 +39,13 @@ class netD_pixel(nn.Module):
         super(netD_pixel, self).__init__()
         self.conv1 = nn.Conv2d(256, 256, kernel_size=1, stride=1,
                   padding=0, bias=False)
+        self.bn1 = nn.BatchNorm2d(256)
         self.conv2 = nn.Conv2d(256, 128, kernel_size=1, stride=1,
                                padding=0, bias=False)
+        self.bn2 = nn.BatchNorm2d(128)
         self.conv3 = nn.Conv2d(128, 1, kernel_size=1, stride=1,
                                padding=0, bias=False)
+        self.bn3 = nn.BatchNorm2d(1)
         self.context = context
         self._init_weights()
     def _init_weights(self):
@@ -59,16 +62,27 @@ class netD_pixel(nn.Module):
       normal_init(self.conv1, 0, 0.01)
       normal_init(self.conv2, 0, 0.01)
       normal_init(self.conv3, 0, 0.01)
+      
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
+        # x = F.relu(self.conv1(x))
+        # x = F.relu(self.conv2(x))
+        # tag: yang adds BN layer
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = F.relu(self.bn2(self.conv2(x)))
         if self.context:
-          feat = F.avg_pool2d(x, (x.size(2), x.size(3)))
-          x = self.conv3(x)
-          return F.sigmoid(x),feat
+          # print('-----------x', x.shape)#  torch.Size([1, 128, 150, 150])
+          feat = F.avg_pool2d(x, (x.size(2), x.size(3))) # torch.Size([1, 128, 1, 1])
+          # x = self.conv3(x)
+          # tag: yang adds BN layer
+          x = self.bn3(self.conv3(x))
+          # print('-----------feat', feat.shape)
+          # print('---------------torch.sigmoid(x)', torch.sigmoid(x).shape) # torch.sigmoid(x) torch.Size([1, 1, 150, 150])
+          return torch.sigmoid(x),feat
         else:
-          x = self.conv3(x)
-          return F.sigmoid(x)
+          # x = self.conv3(x)
+          # tag: yang adds BN layer
+          x = self.bn3(self.conv3(x))
+          return torch.sigmoid(x)
 
 class netD(nn.Module):
     def __init__(self,context=False):
@@ -86,11 +100,14 @@ class netD(nn.Module):
         x = F.dropout(F.relu(self.bn1(self.conv1(x))),training=self.training)
         x = F.dropout(F.relu(self.bn2(self.conv2(x))),training=self.training)
         x = F.dropout(F.relu(self.bn3(self.conv3(x))),training=self.training)
-        x = F.avg_pool2d(x,(x.size(2),x.size(3)))
-        x = x.view(-1,128)
+        x = F.avg_pool2d(x,(x.size(2),x.size(3))) # torch.Size([1, 128, 1, 1])
+        # print('-----------x after pooling', x.shape) 
+        x = x.view(-1,128) # torch.Size([1, 128])
+        # print('-----------x after viewing', x.shape)
         if self.context:
           feat = x
-        x = self.fc(x)
+        x = self.fc(x) # torch.Size([1, 2]) tensor([[-0.1457, -0.0657]], device='cuda:0', grad_fn=<ThAddmmBackward>)
+        # print('-----------x after fc', x.shape)
         if self.context:
           return x,feat
         else:
@@ -248,7 +265,7 @@ def resnet18(pretrained=False):
   """
   model = ResNet(BasicBlock, [2, 2, 2, 2])
   if pretrained:
-    model.load_state_dict(model_zoo.load_url(model_urls['resnet18']))
+    model.load_state_dict(model_zoo.load_url(model_urls['resnet18']), model_dir=cfg.RESNET_PATH)
   return model
 
 
@@ -259,7 +276,7 @@ def resnet34(pretrained=False):
   """
   model = ResNet(BasicBlock, [3, 4, 6, 3])
   if pretrained:
-    model.load_state_dict(model_zoo.load_url(model_urls['resnet34']))
+    model.load_state_dict(model_zoo.load_url(model_urls['resnet34']), model_dir=cfg.RESNET_PATH)
   return model
 
 
@@ -270,7 +287,7 @@ def resnet50(pretrained=False):
   """
   model = ResNet(Bottleneck, [3, 4, 6, 3])
   if pretrained:
-    model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
+    model.load_state_dict(model_zoo.load_url(model_urls['resnet50']), model_dir=cfg.RESNET_PATH)
   return model
 
 
@@ -281,7 +298,7 @@ def resnet101(pretrained=False):
   """
   model = ResNet(Bottleneck, [3, 4, 23, 3])
   if pretrained:
-    model.load_state_dict(model_zoo.load_url(model_urls['resnet101']))
+    model.load_state_dict(model_zoo.load_url(model_urls['resnet101']), model_dir=cfg.RESNET_PATH)
   return model
 
 
@@ -305,7 +322,7 @@ class resnet(_fasterRCNN):
     self.gc = gc
     self.layers = num_layers
     if self.layers == 50:
-      self.model_path = '/home/grad3/keisaito/data/pretrained_model/resnet50_caffe.pth'
+      self.model_path = '/data/users/yang/code/DA_Detection/pretrained_models/resnet50.pth'
     _fasterRCNN.__init__(self, classes, class_agnostic,lc,gc)
 
   def _init_modules(self):
@@ -316,6 +333,7 @@ class resnet(_fasterRCNN):
     if self.pretrained == True:
       print("Loading pretrained weights from %s" %(self.model_path))
       state_dict = torch.load(self.model_path)
+      # state_dict = model_zoo.load_url(model_urls[f'resnet{self.layers}'])
       resnet.load_state_dict({k:v for k,v in state_dict.items() if k in resnet.state_dict()})
     # Build resnet.
     self.RCNN_base1 = nn.Sequential(resnet.conv1, resnet.bn1,resnet.relu,

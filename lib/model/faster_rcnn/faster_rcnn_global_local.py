@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 import torchvision.models as models
-from torch.autograd import Variable
 import numpy as np
 from model.utils.config import cfg
 from model.rpn.rpn import _RPN
@@ -48,12 +47,12 @@ class _fasterRCNN(nn.Module):
         base_feat1 = self.RCNN_base1(im_data)
         if self.lc:
             d_pixel, _ = self.netD_pixel(grad_reverse(base_feat1, lambd=eta))
-            #print(d_pixel)
+            #print(d_pixel)??#tag: why all elements are 0.5????
             if not target:
                 _, feat_pixel = self.netD_pixel(base_feat1.detach())
         else:
             d_pixel = self.netD_pixel(grad_reverse(base_feat1, lambd=eta))
-        base_feat = self.RCNN_base2(base_feat1)
+        base_feat = self.RCNN_base2(base_feat1) # [1, 1024, 38, 38]
         if self.gc:
             domain_p, _ = self.netD(grad_reverse(base_feat, lambd=eta))
             if target:
@@ -62,7 +61,7 @@ class _fasterRCNN(nn.Module):
         else:
             domain_p = self.netD(grad_reverse(base_feat, lambd=eta))
             if target:
-                return d_pixel,domain_p#,diff
+                return d_pixel, domain_p#,diff
         # feed base feature map tp RPN to obtain rois
         rois, rpn_loss_cls, rpn_loss_bbox = self.RCNN_rpn(base_feat, im_info, gt_boxes, num_boxes)
 
@@ -135,7 +134,7 @@ class _fasterRCNN(nn.Module):
         cls_prob = cls_prob.view(batch_size, rois.size(1), -1)
         bbox_pred = bbox_pred.view(batch_size, rois.size(1), -1)
 
-        return rois, cls_prob, bbox_pred, rpn_loss_cls, rpn_loss_bbox, RCNN_loss_cls, RCNN_loss_bbox, rois_label,d_pixel, domain_p#,diff
+        return rois, cls_prob, bbox_pred, rpn_loss_cls, rpn_loss_bbox, RCNN_loss_cls, RCNN_loss_bbox, rois_label, d_pixel, domain_p #,diff
 
     def _init_weights(self):
         def normal_init(m, mean, stddev, truncated=False):

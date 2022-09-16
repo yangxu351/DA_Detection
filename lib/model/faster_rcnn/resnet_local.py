@@ -77,10 +77,10 @@ class netD_pixel(nn.Module):
             feat = F.avg_pool2d(x, (x.size(2), x.size(3)))
             # feat = x
             x = self.conv3(x)
-            return F.sigmoid(x), feat  #F.sigmoid(x),feat#torch.cat((feat1,feat2),1)#F
+            return torch.sigmoid(x), feat  #torch.sigmoid(x),feat#torch.cat((feat1,feat2),1)#F
         else:
             x = self.conv3(x)
-            return F.sigmoid(x)  # F.sigmoid(x)
+            return torch.sigmoid(x)  # torch.sigmoid(x)
 
 
 class netD(nn.Module):
