@@ -9,7 +9,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train a Fast R-CNN network')
     ###########################################################=========data set
     parser.add_argument('--dataset', dest='dataset',
-                        help='source training dataset: SYN_NWPU_C1',
+                        help='source training dataset: SYN_NWPU_C1, synthetic_data_wdt',
                         default=cfg_d.DATASET, type=str)
 
     parser.add_argument('--database', dest='database',
@@ -17,8 +17,8 @@ def parse_args():
                         default=cfg_d.DATABASE, type=str)      
 
     parser.add_argument('--dataset_t', dest='dataset_t',
-                        help='target training dataset:REAL_NWPU_C1',
-                        default=cfg_d.DATASET_T, type=str)
+                        help='target training dataset:REAL_NWPU_C1, xilin_wdt',
+                        default=cfg_d.DATABASE_T, type=str)
     ###########################################################=========end data set
 
     parser.add_argument('--net', dest='net',
@@ -177,6 +177,12 @@ def set_dataset_args(args, test=False):
             args.imdbval_name =args.dataset + "_VAL"
             # args.imdb_name_cycle = "sim10k_cycle_train"  # "voc_cyclewater_2007_trainval+voc_cyclewater_2012_trainval"
             args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '30']
+        # tag: for wdt
+        elif args.dataset == "synthetic_data_wdt":
+            args.imdb_name = args.dataset + "_train"
+            args.imdbval_name =args.dataset + "_val"
+            # args.imdb_name_cycle = "sim10k_cycle_train"  # "voc_cyclewater_2007_trainval+voc_cyclewater_2012_trainval"
+            args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '30']
         
         ## cityscape dataset for only car classes.
         # elif args.dataset == "cityscape_kitti":
@@ -220,7 +226,13 @@ def set_dataset_args(args, test=False):
             args.imdb_name_target = args.dataset_t + "_TEST"
             args.imdbval_name_target = args.dataset_t + "_TEST"
             args.set_cfgs_target = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES',
-                                    '20']                            
+                                    '20']  
+        # tag: for wdt
+        elif args.dataset_t == "xilin_wdt":
+            args.imdb_name_target = args.dataset_t + "_val"
+            args.imdbval_name_target = args.dataset_t + "_val"
+            args.set_cfgs_target = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES',
+                                    '20']                                                        
     else:
         if args.dataset == "pascal_voc":
             args.imdb_name = "voc_2007_trainval"
