@@ -192,11 +192,11 @@ def split_real_data_train_val(data_seed = 0):
     val_index = random.sample(range(0, files_num), k=int(files_num*args.val_percent))
     train_files = []
     val_files = []
-    for index, file_name in enumerate(files_name):
+    for index, f in enumerate(files):
         if index in val_index:
-            val_files.append(file_name)
+            val_files.append(f)
         else:
-            train_files.append(file_name)
+            train_files.append(f)
     print('len val files', len(val_files))
     try:
         if not os.path.exists(args.workdir_data_txt):
