@@ -17,6 +17,7 @@ from PIL import Image
 from datasets.object_score_util import get_bbox_coords_from_annos_with_object_score as gbc
 
 IMG_FORMAT = '.png'
+
 TXT_FORMAT = '.txt'
 XML_FORMAT = '.xml'
 
@@ -29,15 +30,22 @@ def group_syn_object_annotation_to_form_xml(database, syn_args, data_cat='SYN_NW
     and draw bbox for each ground truth files
     '''
     ix = data_cat.find('_')
-    cat = cat[ix+1:] # NWPU_C1
-
-    step = int(syn_args.tile_size * syn_args.resolution)
-    folder_name = 'color_all_annos_step{}'.format(step)
+    cat = data_cat[ix+1:] # NWPU_C1
+    if 'wdt' in data_cat:
+        folder_name = f'{database}'+'_annos'
+        IMG_FORMAT = '.jpg'
+    else:
+        step = int(syn_args.tile_size * syn_args.resolution)
+        folder_name = 'color_all_annos_step{}'.format(step)
     lbl_path = os.path.join(syn_args.syn_data_dir, folder_name)
     print('lbl_path', lbl_path)
     if dilate:
-        dila_folder_name = 'color_all_annos_dilated_step{}'.format(step)
+        if 'wdt' in data_cat:
+            dila_folder_name = f'{database}'+'_annos_dilated'
+        else:
+            dila_folder_name = 'color_all_annos_dilated_step{}'.format(step)
         syn_data_segs_dir = os.path.join(syn_args.syn_data_segs_dir, dila_folder_name)
+        print('syn_data_segs_dir', syn_data_segs_dir)
         if not os.path.exists(syn_data_segs_dir):
             os.makedirs(syn_data_segs_dir)
         # else:
@@ -143,11 +151,14 @@ def split_syn_nwpu_background_trn_val(seed=17, database='syn_nwpu_bkg_px23whr3_*
     data_dir = syn_args.workdir_data_txt.format(data_cat, database)
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
-
-    step = int(syn_args.tile_size * syn_args.resolution)
-    img_dir = os.path.join(syn_args.syn_data_dir, 'color_all_images_step{}'.format(step))
+    if 'wdt' in data_cat:
+        img_dir = os.path.join(syn_args.syn_data_dir, '{}_images'.format(database))
+        IMG_FORMAT = '.jpg'
+    else:
+        step = int(syn_args.tile_size * syn_args.resolution)
+        img_dir = os.path.join(syn_args.syn_data_dir, 'color_all_images_step{}'.format(step))
     print('img dir', img_dir)
-    all_files = np.sort(glob.glob(os.path.join(syn_args.syn_data_dir, 'color_all_images_step{}'.format(step), '*' + IMG_FORMAT)))
+    all_files = np.sort(glob.glob(os.path.join(img_dir, '*' + IMG_FORMAT)))
     lbl_dir = syn_args.syn_voc_annos_dir
 
     # trn_txt = open(os.path.join(data_dir, 'train_seed{}.txt'.format(seed)), 'w')
@@ -233,8 +244,12 @@ def get_args(database='', px_thres=12, whr_thres=5, data_cat='SYN_NWPU_C1', res=
                         
     parser.add_argument("--syn_box_dir", type=str, default='{}/{}_gt_bbox_xml', help="syn box files")
 
-    parser.add_argument("--workdir_data_txt", type=str, default='data/real_syn_nwpu_vockit/{}/{}',
-                        help="syn related txt files data/real_syn_nwpu_vockit/\{syn_nwpu_c1\}/{cmt}")
+    if 'NWPU' in data_cat:
+        parser.add_argument("--workdir_data_txt", type=str, default='data/real_syn_nwpu_vockit/{}/{}',
+                            help="syn related txt files data/real_syn_nwpu_vockit/\{syn_nwpu_c1\}/{cmt}")
+    else:
+        parser.add_argument("--workdir_data_txt", type=str, default='data/real_syn_wdt_vockit/{}/{}',
+                        help="syn related txt files data/real_syn_wdt_vockit/\{syn_wdt\}/{cmt}")
 
    
     #fixme ---***** min_region ***** change
@@ -246,7 +261,7 @@ def get_args(database='', px_thres=12, whr_thres=5, data_cat='SYN_NWPU_C1', res=
     parser.add_argument("--class_num", type=int, default=1, help="class number")
     parser.add_argument("--px_thres", type=int, default=12, help="#pixels of edge length")
     parser.add_argument("--whr_thres", type=int, default=5, help="ratio of w/h or h/w")
-    parser.add_argument("--val_percent", type=float, default=0.2, help="train:val=0.8:0.2")
+    parser.add_argument("--val_percent", type=float, default=0.3, help="train:val=0.7:0.3")
     
     args = parser.parse_args()
     args.px_thres = px_thres
@@ -257,13 +272,6 @@ def get_args(database='', px_thres=12, whr_thres=5, data_cat='SYN_NWPU_C1', res=
         
         args.syn_voc_annos_dir = args.syn_voc_annos_dir.format(args.syn_base_dir, database, args.link_r, args.min_region, args.px_thres, args.whr_thres)
         args.syn_box_dir = args.syn_box_dir.format(args.syn_base_dir, database)
-        
-
-    # if not os.path.exists(args.syn_annos_dir):
-    #     os.makedirs(args.syn_annos_dir)
-    
-    # if not os.path.exists(args.syn_box_dir):
-    #     os.makedirs(args.syn_box_dir)
 
     return args
 
@@ -276,14 +284,20 @@ if __name__ == '__main__':
     '''
     ################################# 
     ######
-    px_thres= 10 
-    whr_thres = 3
-    dilate = True
-    database = 'syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6'
-    data_cat = 'SYN_NWPU_C1'
-    res=0.5
-    syn_args = get_args(database, px_thres, whr_thres, data_cat, res)
-    group_syn_object_annotation_to_form_xml(database, syn_args, data_cat)
+    # px_thres= 10 
+    # whr_thres = 3
+    # dilate = True
+    # database = 'syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6'
+    # data_cat = 'SYN_NWPU_C1'
+    # res=0.5
+    # syn_args = get_args(database, px_thres, whr_thres, data_cat)
+
+    ####### for WDT
+    # database = 'syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40'
+    # data_cat = 'synthetic_data_wdt'
+    # dilate = True
+    # syn_args = get_args(database, data_cat=data_cat)
+    # group_syn_object_annotation_to_form_xml(database, syn_args, data_cat) #valid annos 13500 cnt 12087
     
 
     '''
@@ -300,9 +314,18 @@ if __name__ == '__main__':
 
 
     ''' split data into train val '''
+    # from datasets.config_dataset import cfg_d
+    # pxwhr = f'px{px_thres}whr{whr_thres}'
+    # seed = cfg_d.DATA_SEED
+    # database = 'syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6'
+    # data_cat = 'SYN_NWPU_C1'
+    # split_syn_nwpu_background_trn_val(seed, database, data_cat)
+
+    ############ for wdt
     from datasets.config_dataset import cfg_d
-    pxwhr = f'px{px_thres}whr{whr_thres}'
+    pxwhr = f'px12whr5'
     seed = cfg_d.DATA_SEED
-    database = 'syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6'
-    data_cat = 'SYN_NWPU_C1'
+    database = 'syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40'
+    data_cat = 'synthetic_data_wdt'
+    syn_args = get_args(database, data_cat=data_cat)
     split_syn_nwpu_background_trn_val(seed, database, data_cat)
