@@ -190,23 +190,32 @@ def split_real_data_train_val(data_seed = 0):
     
     random.seed(data_seed)
     val_index = random.sample(range(0, files_num), k=int(files_num*args.val_percent))
-    train_files = []
-    val_files = []
+    train_img_files = []
+    val_img_files = []
+    train_lbl_files = []
+    val_lbl_files = []
     for index, f in enumerate(files):
+        img_name = os.path.basename(f).replace('.xml', '.jpg')
         if index in val_index:
-            val_files.append(f)
+            val_lbl_files.append(f)
+            val_img_files.append(os.path.join(args.real_img_dir, img_name))
         else:
-            train_files.append(f)
-    print('len val files', len(val_files))
+            train_lbl_files.append(f)
+            train_img_files.append(os.path.join(args.real_img_dir, img_name))
+    print('len val files', len(val_lbl_files))
     try:
         if not os.path.exists(args.workdir_data_txt):
             os.makedirs(args.workdir_data_txt)
         all_f = open(os.path.join(args.workdir_data_txt, "all.txt"), "w")
-        train_f = open(os.path.join(args.workdir_data_txt, f"train_seed{data_seed}.txt"), "w")
-        eval_f = open(os.path.join(args.workdir_data_txt, f"val_seed{data_seed}.txt"), "w")
-        train_f.write("\n".join(train_files))
-        eval_f.write("\n".join(val_files))
-        all_f.write("\n".join(train_files+val_files))
+        train_img_f = open(os.path.join(args.workdir_data_txt, f"train_img_seed{data_seed}.txt"), "w")
+        val_img_f = open(os.path.join(args.workdir_data_txt, f"val_img_seed{data_seed}.txt"), "w")
+        train_img_f.write("\n".join(train_img_files))
+        val_img_f.write("\n".join(val_img_files))
+        train_lbl_f = open(os.path.join(args.workdir_data_txt, f"train_lbl_seed{data_seed}.txt"), "w")
+        val_lbl_f = open(os.path.join(args.workdir_data_txt, f"val_lbl_seed{data_seed}.txt"), "w")
+        train_lbl_f.write("\n".join(train_lbl_files))
+        val_lbl_f.write("\n".join(val_lbl_files))
+        all_f.write("\n".join(val_img_files+train_img_files))
     except FileExistsError as e:
         print(e)
         exit(1)
