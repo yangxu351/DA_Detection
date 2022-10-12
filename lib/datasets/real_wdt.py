@@ -47,10 +47,10 @@ IMG_SUFFIX = '.jpg'
 
 
 class real_wdt(imdb):
-    def __init__(self, image_set='real_wdt_test', devkit_path=None):
+    def __init__(self, image_set='xilin_wdt_test', devkit_path=None):
         imdb.__init__(self, image_set)
         cix = image_set.rfind('_')
-        self._class_set = image_set[:cix].upper() # 'REAL_NWPU_C1'
+        self._class_set = image_set[:cix] 
         
         self._year = '2022'
         self._image_set = image_set[cix+1:].lower() # test
@@ -127,14 +127,14 @@ class real_wdt(imdb):
     
     def get_img_set_file(self):
         img_set_file = os.path.join(self._devkit_path,  
-                                    f'{self._image_set}_img_seed{cfg_d.DATA_SEED}.txt')
+                                    f'{self._image_set}_seed{cfg_d.REAL_DATA_SEED}.txt')
         assert os.path.exists(img_set_file), \
             'File does not exist: {}'.format(img_set_file)
         return img_set_file
 
     def get_lbl_set_file(self):
         lbl_set_file = os.path.join(self._devkit_path,  
-                                    f'{self._image_set}_lbl_seed{cfg_d.DATA_SEED}.txt')
+                                    f'{self._image_set}_seed{cfg_d.REAL_DATA_SEED}.txt')
         assert os.path.exists(lbl_set_file), \
             'File does not exist: {}'.format(lbl_set_file)
         return lbl_set_file
@@ -439,12 +439,9 @@ class real_wdt(imdb):
 
 if __name__ == '__main__':
     
-    d = real_wdt('real_wdt_train')
-    d = real_wdt('real_wdt_val')
+    # d = real_wdt('xilin_wdt_train')
+    d = real_wdt('xilin_wdt_val')
     
     res = d.roidb
-    # from IPython import embed;
-
-    # embed()
-    
+    print('len res', len(res))
         
