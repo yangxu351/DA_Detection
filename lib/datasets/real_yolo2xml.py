@@ -6,6 +6,7 @@ in order to generate xivew 2-d background with synthetic airplances
 '''
 import glob
 import numpy as np
+import random
 import argparse
 import os
 import sys
@@ -28,9 +29,13 @@ def generate_xml_from_real_annotation(args, data_cat='REAL_NWPU_C1'):
     group annotation files, generate bbox for each object,
     and draw bbox for each ground truth files
     '''
-    data_cat = data_cat.upper()
-    ix = data_cat.find('_')
-    cat = data_cat[ix+1:] # NWPU_C1
+    #tag: adjust for wdt
+    if 'NWPU' in data_cat:
+        data_cat = data_cat.upper()
+        ix = data_cat.find('_')
+        cat = data_cat[ix+1:] # NWPU_C1
+    else: # wdt
+        cat = data_cat
 
     yolo_dila_annos_files = []
     if '0' in data_cat: # background
@@ -58,7 +63,7 @@ def generate_xml_from_real_annotation(args, data_cat='REAL_NWPU_C1'):
             df = pd.DataFrame([])
         else:
             df = pd.read_csv(f, header=None, sep=' ').to_numpy()
-            print(df.shape)
+            print('dila_anno', df.shape)
             #xcycwh are float relative values, xminyminxmaxymax are absolute values
             min_ws = np.clip((df[:, 1] - df[:, 3]/2)*args.tile_size, 0, args.tile_size-1).astype(np.int32)
             min_hs = np.clip((df[:, 2] - df[:, 4]/2)*args.tile_size, 0, args.tile_size-1).astype(np.int32)
@@ -87,8 +92,13 @@ def generate_xml_from_real_annotation(args, data_cat='REAL_NWPU_C1'):
 
         for j in range(df.shape[0]):
             x_min, y_min, x_max, y_max = min_ws[j], min_hs[j], max_ws[j], max_hs[j]
-            cat_id = int(df[j, 5] + 1) # change the cat id, start from 1, new cat_id=0--> background
-            new_data_cat = cat[:-1] + str(cat_id) # NWPU_C*
+            #tag: adjust for wdt
+            if 'NWPU' in data_cat:
+                cat_id = int(df[j, 5] + 1) # change the cat id, start from 1, new cat_id=0--> background
+                new_data_cat = cat[:-1] + str(cat_id) # NWPU_C*
+            else:
+                cat_id = int(df[j,  0])
+                new_data_cat = data_cat
             # write each object to the file
             xml_file.write('\t<object>\n')
             xml_file.write('\t\t<name>' + new_data_cat + '</name>\n')
@@ -172,6 +182,36 @@ def split_real_nwpu_background_trn_val(seed=17, data_cat='real_nwpu_c0'):
     trn_txt.close()
 
 
+def split_real_data_train_val(data_seed = 0):
+
+    files = glob.glob(os.path.join(args.real_voc_annos_dir, '*.xml'))
+    files_name = sorted([os.path.basename(f).split(".")[0] for f in files])
+    files_num = len(files_name)
+    
+    random.seed(data_seed)
+    val_index = random.sample(range(0, files_num), k=int(files_num*args.val_percent))
+    train_files = []
+    val_files = []
+    for index, file_name in enumerate(files_name):
+        if index in val_index:
+            val_files.append(file_name)
+        else:
+            train_files.append(file_name)
+    print('len val files', len(val_files))
+    try:
+        if not os.path.exists(args.workdir_data_txt):
+            os.makedirs(args.workdir_data_txt)
+        all_f = open(os.path.join(args.workdir_data_txt, "all.txt"), "w")
+        train_f = open(os.path.join(args.workdir_data_txt, f"train_seed{data_seed}.txt"), "w")
+        eval_f = open(os.path.join(args.workdir_data_txt, f"val_seed{data_seed}.txt"), "w")
+        train_f.write("\n".join(train_files))
+        eval_f.write("\n".join(val_files))
+        all_f.write("\n".join(train_files+val_files))
+    except FileExistsError as e:
+        print(e)
+        exit(1)
+
+
 def create_data_combine_real_C_val_bkg(seed=17, data_cats=['real_nwpu_c1','real_nwpu_c0']):
     
     data_dir = args.workdir_data_txt.format(data_cats[0])
@@ -232,28 +272,33 @@ def parse_data_cfg(path):
     return options
 
 def get_args(data_cat='REAL_NWPU_C1'):
-    inx = data_cat.find('_') +1
-    cat = data_cat[inx:].upper() #  'NWPU_C1'
     parser = argparse.ArgumentParser()
-    
-    parser.add_argument("--real_base_dir", type=str,
-                        help="base path of real data",
-                        default=f'/data/users/yang/data/{data_cat}')
+    if 'NWPU' in data_cat:
+        inx = data_cat.find('_') +1
+        cat = data_cat[inx:].upper() #  'NWPU_C1'
+        parser.add_argument("--real_base_dir", type=str,
+                            help="base path of real data",
+                            default=f'/data/users/yang/data/{data_cat}')
 
-    parser.add_argument("--real_img_dir", type=str,
-                        help="Path to folder containing real images ",
-                        default='{}/{}_imgs_{}_all')
+        parser.add_argument("--real_img_dir", type=str,
+                            help="Path to folder containing real images ",
+                            default='{}/{}_imgs_{}_all')
 
-    parser.add_argument("--real_yolo_annos_dir", type=str, default='{}/{}_labels_xcycwh_all',
-                        help="Path to folder containing yolo format annotations")  
+        parser.add_argument("--real_yolo_annos_dir", type=str, default='{}/{}_labels_xcycwh_all',
+                            help="Path to folder containing yolo format annotations")  
+                            
+        parser.add_argument("--real_voc_annos_dir", type=str, default='{}/{}_all_annos_xml',
+                            help="syn annos in voc format .xml \{real_base_dir\}/{cat}_all_xml_annos")     
                         
-    parser.add_argument("--real_voc_annos_dir", type=str, default='{}/{}_all_annos_xml',
-                        help="syn annos in voc format .xml \{real_base_dir\}/{cat}_all_xml_annos")     
-                        
+    else: #'wdt'#tag: adjust for wdt
+        cat = data_cat
+        parser.add_argument("--workdir_data_txt", type=str, default=f'data/real_syn_wdt_vockit/{data_cat}',
+                            help="syn related txt files data/real_syn_wdt_vockit/\{xilin_wdt\}")
 
-    parser.add_argument("--workdir_data_txt", type=str, default=f'data/real_syn_nwpu_vockit/{data_cat}',
-                        help="syn related txt files data/real_syn_nwpu_vockit/\{real_nwpu_c1\}")
-
+        parser.add_argument("--real_base_dir", type=str,default='/data/users/yang/data/wind_turbine', help="base path of synthetic data")
+        parser.add_argument("--real_img_dir", type=str, default='{}/{}_crop', help="Path to folder containing real images")
+        parser.add_argument("--real_yolo_annos_dir", type=str, default='{}/{}_crop_label_xcycwh', help="Path to folder containing real annos of yolo format")
+        parser.add_argument("--real_voc_annos_dir", type=str, default='{}/{}_crop_label_xml_annos', help="Path to folder containing real annos of yolo format")
    
     #fixme ---***** min_region ***** change
     parser.add_argument("--tile_size", type=int, default=608, help="image size")
@@ -276,11 +321,23 @@ if __name__ == '__main__':
     '''
     ################################# 
     ######
-    data_cat = 'REAL_NWPU_C1'
-    # data_cat = 'REAL_NWPU_C0'
+    # data_cat = 'REAL_NWPU_C1'
+    # # data_cat = 'REAL_NWPU_C0'
+    # args = get_args(data_cat)
+    # generate_xml_from_real_annotation(args, data_cat)
+
+    ######### for wdt
+    #tag: adjust for wdt
+    # data_cat = 'xilin_wdt'
+    # args = get_args(data_cat)
+    # generate_xml_from_real_annotation(args, data_cat)
+
+    ''' split real dataset of wdt into train val'''
+    data_cat = 'xilin_wdt'
     args = get_args(data_cat)
-    generate_xml_from_real_annotation(args, data_cat)
-    
+    data_seed = 0
+    split_real_data_train_val(data_seed)
+
 
     '''
     draw bbox on rgb images for syn_background data
