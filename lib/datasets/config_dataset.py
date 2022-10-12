@@ -14,7 +14,8 @@ __D = edict()
 cfg_d = __D
 
 __D.DATA_SEED = 17
-
+# tag: for WDT
+__D.REAL_DATA_SEED = 0
 #
 # Training options
 #with regard to pascal, the directories under the path will be ./VOC2007, ./VOC2012"
@@ -37,9 +38,10 @@ __D.FOGGYCITY = "VOC2007"
 # __D.DATABASE = 'syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6'
 # __D.DATASET_T = 'REAL_NWPU_C1'
 
-__D.BASE_DATA_DIR = "/data/users/yang/data"
+#Tag:  for wind turbines
+__D.BASE_DATA_DIR = "/data/users/yang/data/wind_turbine"
 __D.DEV_DATA_DIR = "data/real_syn_wdt_vockit"
-#Tag:
+
 __D.DATASET = 'synthetic_data_wdt'
 __D.DATABASE = 'syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40'
 __D.DATASET_T = 'xilin_wdt'
