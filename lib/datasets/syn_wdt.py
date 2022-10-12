@@ -45,12 +45,15 @@ except NameError:
 # IMG_SUFFIX = '.png'
 IMG_SUFFIX = '.jpg'
 
+def is_non_zero_file(fpath):
+    return os.path.isfile(fpath) and os.path.getsize(fpath) > 0
+
 
 class syn_wdt(imdb):
     def __init__(self, image_set='syn_wdt_train', devkit_path=None):
         imdb.__init__(self, image_set)
         cix = image_set.rfind('_')
-        data_cat = image_set[:cix].upper() # 'syn_wdt'
+        data_cat = image_set[:cix] ## 'syn_wdt'
         
         database = cfg_d.DATABASE # 'syn*wdt_*'
 
@@ -275,12 +278,18 @@ class syn_wdt(imdb):
 
         return self.create_roidb_from_box_list(box_list, gt_roidb)
 
+    
+
+
     def _load_pascal_annotation(self, index):
         """
         Load image and bounding boxes info from XML file in the PASCAL VOC
         format. Exclude bounding boxes which are not included in self._classes.
         """
         lbl_file = self._label_arr[index]
+        # tag: for null files
+        if not is_non_zero_file(lbl_file):
+            return None
         tree = ET.parse(lbl_file)
         objs = tree.findall('object')
 
@@ -453,10 +462,21 @@ class syn_wdt(imdb):
 
 if __name__ == '__main__':
     database = 'syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40'
-    d = syn_wdt('syn_wdt_train', database)
-    # d = syn_nwpu('syn_wdt_val', database)
+    # d = syn_wdt('synthetic_data_wdt_train', database) # 9450
+    d = syn_wdt('synthetic_data_wdt_val', database) # 4050
     res = d.roidb
     print('len res', len(res))
-    # from IPython import embed;
 
-    # embed()
+    ####### just for testing
+    # data_path= '/data/users/yang/data/synthetic_data_wdt/syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40/minr10_linkr10_px12whr5_all_annos_xml'
+    # files = glob.glob(os.path.join(data_path, '*.xml'))
+    # if os.path.exists(data_path):
+    #     print('1')
+    # else:
+    #     print('0')
+    
+    # names = [os.path.basename(f) for f in files]
+    # if 'syn_wdt_CloudySky_sd4869_ca0_ch57_202.xml' in names:
+    #     print('yes')
+    # else:
+    #     print('no')
