@@ -56,7 +56,7 @@ class real_wdt(imdb):
         self._image_set = image_set[cix+1:].lower() # test
         self._devkit_path = os.path.join(cfg_d.DEV_DATA_DIR, self._class_set) #self._get_default_path() if devkit_path is None \
             #else devkit_path
-        self._data_path = os.path.join(cfg_d.BASE_DATA_DIR, self._class_set)
+        self._data_path = os.path.join(cfg_d.BASE_DATA_DIR, cfg_d.DATA_DIR_T, self._class_set)
 
         print('data path', self._data_path)
         self._classes = ('WIND_TURBINE')#,  # __background__ always index 0
@@ -171,7 +171,7 @@ class real_wdt(imdb):
         """
         Return the default path where PASCAL VOC is expected to be installed.
         """
-        return os.path.join(cfg_d.BASE_DATA_DIR, self._class_set)
+        return os.path.join(cfg_d.BASE_DATA_DIR, cfg_d.DATA_DIR_T, self._class_set)
 
     def gt_roidb(self):
         """_image_index
@@ -351,8 +351,6 @@ class real_wdt(imdb):
 
     def _write_voc_results_file(self, all_boxes):
         for cls_ind, cls in enumerate(self.classes):
-            if cls == 'NWPU_C0':
-                continue
             print('Writing {} VOC results file'.format(cls))
             filename = self._get_voc_results_file_template().format(cls)
             with open(filename, 'wt') as f:
@@ -376,8 +374,6 @@ class real_wdt(imdb):
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
         for i, cls in enumerate(self._classes):
-            if cls == 'NWPU_C0':
-                continue
             filename = self._get_voc_results_file_template().format(cls)
             rec, prec, ap = voc_eval(
                 filename, self._label_arr, self._image_arr, cls, cachedir, ovthresh=0.5,
@@ -439,8 +435,8 @@ class real_wdt(imdb):
 
 if __name__ == '__main__':
     
-    # d = real_wdt('xilin_wdt_train')
-    d = real_wdt('xilin_wdt_val')
+    d = real_wdt('xilin_wdt_train')
+    # d = real_wdt('xilin_wdt_val')
     
     res = d.roidb
     print('len res', len(res))
