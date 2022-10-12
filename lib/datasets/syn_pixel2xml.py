@@ -74,10 +74,11 @@ def group_syn_object_annotation_to_form_xml(database, syn_args, data_cat='SYN_NW
         image_height = orig_img.height
         whwhs = gbc.get_syn_object_coords_after_group(f, min_region=syn_args.min_region, link_r=syn_args.link_r, px_thres=syn_args.px_thres, whr_thres=syn_args.whr_thres)
         
+        xml_file = open(os.path.join(syn_args.syn_voc_annos_dir, img_name.replace(IMG_FORMAT, '.xml')), 'w')
         if not whwhs.shape[0]:
+            xml_file.close()
             continue
         cnt += 1
-        xml_file = open(os.path.join(syn_args.syn_voc_annos_dir, img_name.replace(IMG_FORMAT, '.xml')), 'w')
         xml_file.write('<annotation>\n')
         # xml_file.write('\t<folder>'+ database +'</folder>\n')
         xml_file.write('\t<filename>' + img_name + '</filename>\n')
@@ -293,11 +294,11 @@ if __name__ == '__main__':
     # syn_args = get_args(database, px_thres, whr_thres, data_cat)
 
     ####### for WDT
-    # database = 'syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40'
-    # data_cat = 'synthetic_data_wdt'
-    # dilate = True
-    # syn_args = get_args(database, data_cat=data_cat)
-    # group_syn_object_annotation_to_form_xml(database, syn_args, data_cat) #valid annos 13500 cnt 12087
+    database = 'syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40'
+    data_cat = 'synthetic_data_wdt'
+    dilate = True
+    syn_args = get_args(database, data_cat=data_cat)
+    group_syn_object_annotation_to_form_xml(database, syn_args, data_cat) #valid annos 13500 cnt 12087
     
 
     '''
@@ -320,12 +321,3 @@ if __name__ == '__main__':
     # database = 'syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6'
     # data_cat = 'SYN_NWPU_C1'
     # split_syn_nwpu_background_trn_val(seed, database, data_cat)
-
-    ############ for wdt
-    from datasets.config_dataset import cfg_d
-    pxwhr = f'px12whr5'
-    seed = cfg_d.DATA_SEED
-    database = 'syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40'
-    data_cat = 'synthetic_data_wdt'
-    syn_args = get_args(database, data_cat=data_cat)
-    split_syn_nwpu_background_trn_val(seed, database, data_cat)
