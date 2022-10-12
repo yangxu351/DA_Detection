@@ -26,6 +26,9 @@ from datasets.foggy_cityscape import foggy_cityscape
 from datasets.syn_nwpu import syn_nwpu
 from datasets.real_nwpu import real_nwpu
 
+from datasets.syn_wdt import syn_wdt
+from datasets.real_wdt import real_wdt
+
 import numpy as np
 for split in ['train', 'trainval','val','test']:
   name = 'cityscape_{}'.format(split)
@@ -78,6 +81,16 @@ for split in ['train','val']:
 for split in ['test']:
   dataset = 'real_nwpu_c1_{}'.format(split).upper()
   __sets[dataset] = (lambda name=dataset: real_nwpu(name))  
+
+# tag: yang adds for wdt
+for split in ['train','val']:
+  dataset = 'synthetic_data_wdt_{}'.format(split)
+  __sets[dataset] = (lambda name=dataset: syn_wdt(name))
+  # print('__sets',[x for x in __sets.values()])
+
+for split in ['val']:
+  dataset = 'xilin_{}'.format(split)
+  __sets[dataset] = (lambda name=dataset: real_wdt(name))  
 
 def get_imdb(name):
   """Get an imdb (image database) by name."""
