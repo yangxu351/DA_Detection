@@ -59,14 +59,14 @@ class real_wdt(imdb):
         self._data_path = os.path.join(cfg_d.BASE_DATA_DIR, cfg_d.DATA_DIR_T, self._class_set)
 
         print('data path', self._data_path)
-        self._classes = ('WIND_TURBINE')#,  # __background__ always index 0
+        self._classes = ['BG', 'xilin_wdt']#,  # __background__ always index 0
                         #  'NWPU_C1') #, # one pair of engines mounted at tail 
                         #  'NC2') # two pairs of engines under wings 
         self._class_to_ind = dict(zip(self.classes, xrange(self.num_classes)))
         self._image_ext = '.jpg'
-        # self._img_dir = self._get_img_lbl_dir('test_img_file')
-        # self._lbl_dir = self._get_img_lbl_dir('test_lbl_file')
-        self._image_index, self._label_index = self._load_image_set_index()
+        self._img_dir = self._get_img_lbl_dir('img_dir')
+        self._lbl_dir = self._get_img_lbl_dir('lbl_dir')
+        self._image_index = self._load_image_set_index()
         self._image_arr, self._label_arr = self._load_image_label_arr()
         # Default to roidb handler
         # self._roidb_handler = self.selective_search_roidb
@@ -93,7 +93,7 @@ class real_wdt(imdb):
         return path of images(.png), annos(.xml)
                 class_set='real_nwpu_c1'
         """
-        data = parse_data_cfg(os.path.join(self._devkit_path, 'data_list.data'))
+        data = parse_data_cfg(os.path.join(self._devkit_path, 'path.data'))
         return data[key]
 
 
@@ -101,11 +101,10 @@ class real_wdt(imdb):
         """
         Return the absolute path to image i in the image sequence.
         """
-        # image_path = self._image_arr[i]
-        # assert os.path.exists(image_path), \
-        #     'Path does not exist: {}'.format(image_path)
-        # return image_path
-        return self.image_path_from_index(self._image_index[i])
+        image_path = self._image_arr[i]
+        assert os.path.exists(image_path), \
+            'Path does not exist: {}'.format(image_path)
+        return image_path
 
     def image_id_at(self, i):
         """
@@ -127,17 +126,18 @@ class real_wdt(imdb):
     
     def get_img_set_file(self):
         img_set_file = os.path.join(self._devkit_path,  
-                                    f'{self._image_set}_seed{cfg_d.REAL_DATA_SEED}.txt')
+                                    f'{self._image_set}_img_seed{cfg_d.REAL_DATA_SEED}.txt')
         assert os.path.exists(img_set_file), \
             'File does not exist: {}'.format(img_set_file)
         return img_set_file
 
     def get_lbl_set_file(self):
         lbl_set_file = os.path.join(self._devkit_path,  
-                                    f'{self._image_set}_seed{cfg_d.REAL_DATA_SEED}.txt')
+                                    f'{self._image_set}_lbl_seed{cfg_d.REAL_DATA_SEED}.txt')
         assert os.path.exists(lbl_set_file), \
             'File does not exist: {}'.format(lbl_set_file)
         return lbl_set_file
+
 
     def _load_image_set_index(self):
         """
@@ -145,14 +145,21 @@ class real_wdt(imdb):
         """
         # Example path to image set file:
         # self._devkit_path + /Main/val.txt
-        img_set_file = self.get_img_set_file()
-        lbl_set_file = self.get_lbl_set_file()
+        # img_set_file = self.get_img_set_file()
+        # lbl_set_file = self.get_lbl_set_file()
         
-        df_img = pd.read_csv(img_set_file, header=None)
-        # print('img', df_img.head())
-        df_lbl = pd.read_csv(lbl_set_file, header=None)
-        # print('lbl', df_lbl.head())
-        return list(df_img.index), list(df_lbl.index)
+        # df_img = pd.read_csv(img_set_file, header=None)
+        # # print('img', df_img.head())
+        # df_lbl = pd.read_csv(lbl_set_file, header=None)
+        # # print('lbl', df_lbl.head())
+        # return list(df_img.index), list(df_lbl.index)
+
+        image_set_file = self.get_img_set_file()
+        assert os.path.exists(image_set_file), \
+            'Path does not exist: {}'.format(image_set_file)
+        with open(image_set_file) as f:
+            image_index = [os.path.basename(x).split('.')[0] for x in f.readlines()]
+        return image_index
 
     def _load_image_label_arr(self):
         """
@@ -180,6 +187,7 @@ class real_wdt(imdb):
         This function loads/saves from/to a cache file to speed up future calls.
         """
         cache_file = os.path.join(self.cache_path, self.name + '_gt_roidb.pkl')
+        #tag: yang comments
         if os.path.exists(cache_file):
             with open(cache_file, 'rb') as fid:
                 roidb = pickle.load(fid)
@@ -419,7 +427,7 @@ class real_wdt(imdb):
             self._do_matlab_eval(output_dir)
         if self.config['cleanup']:
             for cls in self._classes:
-                if cls == 'NWPU_C0':
+                if cls == 'BG':
                     continue
                 filename = self._get_voc_results_file_template().format(cls)
                 os.remove(filename)
@@ -435,8 +443,8 @@ class real_wdt(imdb):
 
 if __name__ == '__main__':
     
-    d = real_wdt('xilin_wdt_train')
-    # d = real_wdt('xilin_wdt_val')
+    # d = real_wdt('xilin_wdt_train')
+    d = real_wdt('xilin_wdt_val')
     
     res = d.roidb
     print('len res', len(res))
