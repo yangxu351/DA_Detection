@@ -216,6 +216,12 @@ def split_real_data_train_val(data_seed = 0):
         train_lbl_f.write("\n".join(train_lbl_files))
         val_lbl_f.write("\n".join(val_lbl_files))
         all_f.write("\n".join(val_img_files+train_img_files))
+
+        data_txt = open(os.path.join(args.workdir_data_txt, 'path.data'), 'w')
+        data_txt.write(f'img_dir={args.real_img_dir}\n')
+        data_txt.write(f'lbl_dir={args.real_voc_annos_dir}\n')
+        data_txt.write(f'class_set={data_cat}')
+        data_txt.close()
     except FileExistsError as e:
         print(e)
         exit(1)
