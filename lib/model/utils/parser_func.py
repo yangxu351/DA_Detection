@@ -11,6 +11,9 @@ def parse_args():
     parser.add_argument('--dataset', dest='dataset',
                         help='source training dataset: SYN_NWPU_C1, synthetic_data_wdt',
                         default=cfg_d.DATASET, type=str)
+    parser.add_argument('--dataset_test', dest='dataset_test',
+                        help='test dataset: xilin_wdt_val',
+                        default=cfg_d.DATASET_TEST, type=str)
 
     parser.add_argument('--database', dest='database',
                         help='source training database: syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6',
@@ -29,7 +32,7 @@ def parse_args():
                         default=1, type=int)
     parser.add_argument('--epochs', dest='max_epochs',
                         help='number of epochs to train',
-                        default=20, type=int)
+                        default=50, type=int)
     parser.add_argument('--gamma', dest='gamma',
                         help='value of gamma',
                         default=5, type=float)
@@ -51,7 +54,7 @@ def parse_args():
                         default="images")  #??????????                     
     ###########################################################=========end dir
     parser.add_argument('--load_name', dest='load_name',
-                        help='path to load models', default="models",
+                        help='path to load models', default="net_res50_target_xilin_wdt_lr0.0001_eta_0.1_lcTrue_glTrue_gamma_5_session_1_epoch_50.pth",
                         type=str)
     parser.add_argument('--nw', dest='num_workers',
                         help='number of worker to load data',
@@ -59,6 +62,10 @@ def parse_args():
     parser.add_argument('--cuda', dest='cuda',
                         help='whether use CUDA', default=True,
                         action='store_true')
+    #fixme:
+    parser.add_argument('--device', dest='device', 
+                        help=' CUDA device', default='cuda:1',
+                        type=str)
 
     parser.add_argument('--detach', dest='detach',
                         help='whether use detach',
@@ -78,6 +85,7 @@ def parse_args():
     parser.add_argument('--mGPUs', dest='mGPUs',
                         help='whether use multiple GPUs',
                         action='store_true', default=False)
+    # fixme:?                    
     parser.add_argument('--bs', dest='batch_size',
                         help='batch_size',
                         default=1, type=int)
@@ -89,6 +97,7 @@ def parse_args():
     parser.add_argument('--o', dest='optimizer',
                         help='training optimizer',
                         default="sgd", type=str)
+    # tag:                     
     parser.add_argument('--lr', dest='lr',
                         help='starting learning rate 0.001',
                         default=0.0001, type=float)
@@ -228,8 +237,9 @@ def set_dataset_args(args, test=False):
             args.set_cfgs_target = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES',
                                     '20']  
         # tag: for wdt
+        #fixme:???? whether set imdb and imdbval the same??????
         elif args.dataset_t == "xilin_wdt":
-            args.imdb_name_target = args.dataset_t + "_val"
+            args.imdb_name_target = args.dataset_t + "_train"
             args.imdbval_name_target = args.dataset_t + "_val"
             args.set_cfgs_target = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES',
                                     '20']                                                        
@@ -245,6 +255,12 @@ def set_dataset_args(args, test=False):
         elif args.dataset == "sim10k":
             args.imdb_name = "sim10k_val"
             args.imdbval_name = "sim10k_val"
+            args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES',
+                             '30']
+        # tag: yang adds                             
+        elif args.dataset_test == "xilin_wdt":
+            args.imdb_name =  args.dataset_test + "_val"
+            args.imdbval_name = args.dataset_test + "_val"
             args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES',
                              '30']
         elif args.dataset == "cityscape":
