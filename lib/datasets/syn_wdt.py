@@ -63,16 +63,15 @@ class syn_wdt(imdb):
             #else devkit_path
         self._data_path = os.path.join(cfg_d.BASE_DATA_DIR, data_cat, database)
         print('data path', self._data_path)
-        self._classes = ('WIND_TURBINE')  # always index 0
+        self._classes = ['BG', 'synthetic_data_wdt'] # always index 0
                         #  'NWPU_C1') #, # one pair of engines mounted at tail 
                         #  'NC2') # two pairs of engines under wings 
         self._class_to_ind = dict(zip(self.classes, xrange(self.num_classes)))
         self._image_ext = IMG_SUFFIX # '.png'
-        self._image_index, self._label_index = self._load_image_label_set_index()
+        self._image_index = self._load_image_set_index()
         self._image_arr, self._label_arr = self._load_image_label_arr()
         print('_image_index', len(self._image_index))
         print('_image_arr', self._image_arr.shape)
-        # self._image_index = self._load_image_set_index()
         # Default to roidb handler
         # self._roidb_handler = self.selective_search_roidb
         self._roidb_handler = self.gt_roidb
@@ -114,22 +113,19 @@ class syn_wdt(imdb):
             'File does not exist: {}'.format(lbl_set_file)
         return lbl_set_file
 
-    def _load_image_label_set_index(self):
+    def _load_image_set_index(self):
         """
         Load the indexes listed in this dataset's image set file.
         """
         # Example path to image set file:
         # self._devkit_path + /Main/val.txt
-        img_set_file = self.get_img_set_file()
-        lbl_set_file = self.get_lbl_set_file()
-        
-        df_img = pd.read_csv(img_set_file, header=None)
-        # print('img', df_img.shape)
-        df_lbl = pd.read_csv(lbl_set_file, header=None)
-        # print('lbl', df_lbl.head())
-        assert df_img.shape==df_lbl.shape, "img shape not equal to the lbl shape"
+        image_set_file = self.get_img_set_file()
+        assert os.path.exists(image_set_file), \
+            'Path does not exist: {}'.format(image_set_file)
+        with open(image_set_file) as f:
+            image_index = [os.path.basename(x).split('.')[0] for x in f.readlines()]
+        return image_index
 
-        return list(df_img.index), list(df_lbl.index)
 
     def _load_image_label_arr(self):
         """
@@ -168,22 +164,6 @@ class syn_wdt(imdb):
         image_path = df_img_path.iloc[index][0]
         return image_path
 
-    # def _load_image_set_index(self):
-    #     """
-    #     Load the indexes listed in this dataset's image set file.
-    #     """
-    #     # Example path to image set file:
-    #     # self._devkit_path + /Main/val.txt
-    #     if 'train' in self._image_set:
-    #         image_set_file = self.get_img_set_file()
-    #     else: # 'val'
-    #         image_set_file = self.get_lbl_set_file()
-        
-    #     assert os.path.exists(image_set_file), \
-    #         'Path does not exist: {}'.format(image_set_file)
-    #     with open(image_set_file) as f:
-    #         image_index = [x.strip() for x in f.readlines()]
-    #     return image_index
 
     def _get_default_path(self):
         """
@@ -205,8 +185,7 @@ class syn_wdt(imdb):
             print('{} gt roidb loaded from {}'.format(self.name, cache_file))
             return roidb
 
-        gt_roidb = [self._load_pascal_annotation(index)
-                    for index in self.image_index]
+        gt_roidb = [self._load_pascal_annotation(index) for index in self.image_index]
         with open(cache_file, 'wb') as fid:
             pickle.dump(gt_roidb, fid, pickle.HIGHEST_PROTOCOL)
         print('wrote gt roidb to {}'.format(cache_file))
@@ -288,8 +267,8 @@ class syn_wdt(imdb):
         """
         lbl_file = self._label_arr[index]
         # tag: for null files
-        if not is_non_zero_file(lbl_file):
-            return None
+        # if not is_non_zero_file(lbl_file):
+        #     return None
         tree = ET.parse(lbl_file)
         objs = tree.findall('object')
 
@@ -322,15 +301,15 @@ class syn_wdt(imdb):
         for ix, obj in enumerate(objs):
             bbox = obj.find('bndbox')
             # Make pixel indexes 0-based
-            # x1 = float(bbox.find('xmin').text) - 1
-            # y1 = float(bbox.find('ymin').text) - 1
-            # x2 = float(bbox.find('xmax').text) - 1
-            # y2 = float(bbox.find('ymax').text) - 1
+            x1 = float(bbox.find('xmin').text) - 1
+            y1 = float(bbox.find('ymin').text) - 1
+            x2 = float(bbox.find('xmax').text) - 1
+            y2 = float(bbox.find('ymax').text) - 1
             # tag: yang changed https://blog.csdn.net/forest_world/article/details/106034880
-            x1 = float(bbox.find('xmin').text)
-            y1 = float(bbox.find('ymin').text)
-            x2 = float(bbox.find('xmax').text)
-            y2 = float(bbox.find('ymax').text)
+            # x1 = float(bbox.find('xmin').text)
+            # y1 = float(bbox.find('ymin').text)
+            # x2 = float(bbox.find('xmax').text)
+            # y2 = float(bbox.find('ymax').text)
 
 
             diffc = obj.find('difficult')
@@ -340,7 +319,7 @@ class syn_wdt(imdb):
                 # cls = self._class_to_ind[obj.find('name').text.lower().strip()]
                 cls = self._class_to_ind[obj.find('name').text.strip()]
             except:
-                print(lbl_file)
+                print('lbl_file',lbl_file)
                 continue
             #seg_map[x1:x2, y1:y2] = cls
             ishards[count] = difficult
@@ -377,7 +356,7 @@ class syn_wdt(imdb):
 
     def _write_voc_results_file(self, all_boxes):
         for cls_ind, cls in enumerate(self.classes):
-            if cls == 'NWPU_C0':
+            if cls == 'BG':
                 continue
             print('Writing {} VOC results file'.format(cls))
             filename = self._get_voc_results_file_template().format(cls)
@@ -462,8 +441,8 @@ class syn_wdt(imdb):
 
 if __name__ == '__main__':
     database = 'syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40'
-    # d = syn_wdt('synthetic_data_wdt_train', database) # 9450
-    d = syn_wdt('synthetic_data_wdt_val', database) # 4050
+    d = syn_wdt('synthetic_data_wdt_train', database) # 8461
+    # d = syn_wdt('synthetic_data_wdt_val', database) # 3626
     res = d.roidb
     print('len res', len(res))
 
@@ -480,3 +459,11 @@ if __name__ == '__main__':
     #     print('yes')
     # else:
     #     print('no')
+
+    # data_path = '/data/users/yang/data/wind_turbine/xilin_wdt_crop_label_xml_annos'
+    # files = glob.glob(os.path.join(data_path, '*.xml'))
+    # names = [os.path.basename(f) for f in files]
+    # if 'IMG_1267_0.xml' in names:
+    #     print('yes')
+    # else:
+    #     print('no') /data/users/yang/data/wind_turbine/xilin_wdt_crop_label_xml_annos/IMG_1294_1.xml
