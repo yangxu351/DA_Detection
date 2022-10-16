@@ -30,12 +30,13 @@ def group_syn_object_annotation_to_form_xml(database, syn_args, data_cat='SYN_NW
     group annotation files, generate bbox for each object,
     and draw bbox for each ground truth files
     '''
-    ix = data_cat.find('_')
-    cat = data_cat[ix+1:] # NWPU_C1
     if 'wdt' in data_cat:
         folder_name = f'{database}'+'_annos'
         IMG_FORMAT = '.jpg'
+        cat = data_cat
     else:
+        ix = data_cat.find('_')
+        cat = data_cat[ix+1:] # NWPU_C1
         step = int(syn_args.tile_size * syn_args.resolution)
         folder_name = 'color_all_annos_step{}'.format(step)
     lbl_path = os.path.join(syn_args.syn_data_dir, folder_name)
@@ -162,12 +163,12 @@ def split_syn_data_trn_val(seed=17, database='syn_nwpu_bkg_px23whr3_*', data_cat
     lbl_dir = syn_args.syn_voc_annos_dir
     all_files = np.sort(glob.glob(os.path.join(lbl_dir, '*' + XML_FORMAT)))
     
-    # trn_txt = open(os.path.join(data_dir, 'train_seed{}.txt'.format(seed)), 'w')
+    trn_txt = open(os.path.join(data_dir, 'train_seed{}.txt'.format(seed)), 'w')
     trn_img_file = os.path.join(data_dir, 'train_img_seed{}.txt'.format(seed))
     trn_img_txt = open(trn_img_file, 'w')
     trn_lbl_file = os.path.join(data_dir, 'train_lbl_seed{}.txt'.format(seed))
     trn_lbl_txt = open(trn_lbl_file, 'w')
-    # val_txt = open(os.path.join(data_dir, 'val_seed{}.txt'.format(seed)), 'w')
+    val_txt = open(os.path.join(data_dir, 'val_seed{}.txt'.format(seed)), 'w')
     val_img_file = os.path.join(data_dir, 'val_img_seed{}.txt'.format(seed))
     val_img_txt = open(val_img_file, 'w')
     val_lbl_file = os.path.join(data_dir, 'val_lbl_seed{}.txt'.format(seed))
@@ -183,19 +184,19 @@ def split_syn_data_trn_val(seed=17, database='syn_nwpu_bkg_px23whr3_*', data_cat
     all_indices = np.random.permutation(num_files)
     print('num_trn', num_trn)
     for j in all_indices[: num_trn]:
-    #        print('all_files[i]', all_files[j])
-        # trn_txt.write('%s\n' % os.path.basename(all_files[j]))
+        print('all_files[i]', all_files[j])
+        trn_txt.write('%s\n' % os.path.basename(all_files[j]))
         trn_lbl_txt.write('%s\n' % all_files[j])
         trn_img_txt.write('%s\n' % os.path.join(img_dir, os.path.basename(all_files[j]).replace(XML_FORMAT, IMG_FORMAT)))
-    # trn_txt.close()
+    trn_txt.close()
     trn_img_txt.close()
     trn_lbl_txt.close()
 
     for i in all_indices[num_trn:num_trn+num_val ]:
-        # val_txt.write('%s\n' % os.path.basename(all_files[i]))
+        val_txt.write('%s\n' % os.path.basename(all_files[i]))
         val_lbl_txt.write('%s\n' % all_files[i])
         val_img_txt.write('%s\n' % os.path.join(img_dir, os.path.basename(all_files[i]).replace(XML_FORMAT, IMG_FORMAT)))
-    # val_txt.close()
+    val_txt.close()
     val_img_txt.close()
     val_lbl_txt.close()
 
@@ -206,6 +207,11 @@ def split_syn_data_trn_val(seed=17, database='syn_nwpu_bkg_px23whr3_*', data_cat
     data_txt.write(f'val_lbl_file={val_lbl_file}\n')
     data_txt.write(f'class_set={data_cat}')
     data_txt.close()
+    path_txt = open(os.path.join(data_dir, 'path.data'), 'w')
+    path_txt.write(f'img_dir={img_dir}\n')
+    path_txt.write(f'val_dir={lbl_dir}\n')
+    path_txt.write(f'class_set={data_cat}')
+    path_txt.close()
 
 
 def parse_data_cfg(path):
@@ -297,11 +303,11 @@ if __name__ == '__main__':
     database = 'syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40'
     data_cat = 'synthetic_data_wdt'
     syn_args = get_args(database, data_cat=data_cat)
-    # dilate = True
-    # group_syn_object_annotation_to_form_xml(database, syn_args, data_cat) #valid annos 13500 cnt 12087
-    from datasets.config_dataset import cfg_d
-    seed = cfg_d.DATA_SEED
-    split_syn_data_trn_val(seed, database, data_cat)
+    dilate = True
+    group_syn_object_annotation_to_form_xml(database, syn_args, data_cat) #valid annos 13500 cnt 12087
+    # from datasets.config_dataset import cfg_d
+    # seed = cfg_d.DATA_SEED
+    # split_syn_data_trn_val(seed, database, data_cat)
 
 
     '''
