@@ -37,6 +37,7 @@ __D.FOGGYCITY = "VOC2007"
 # __D.DATASET = 'SYN_NWPU_C1'
 # __D.DATABASE = 'syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6'
 # __D.DATASET_T = 'REAL_NWPU_C1'
+# __D.DATABASE_T = 'REAL_NWPU_C1'
 
 #Tag:  for wind turbines
 __D.BASE_DATA_DIR = "/data/users/yang/data"
@@ -47,6 +48,7 @@ __D.DATABASE = 'syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40'
 
 __D.DATA_DIR_T = 'wind_turbine'
 __D.DATABASE_T = 'xilin_wdt'
+__D.DATASET_TEST = 'xilin_wdt'
 
 def _merge_a_into_b(a, b):
   """Merge config dictionary a into config dictionary b, clobbering the
