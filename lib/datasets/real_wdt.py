@@ -306,15 +306,15 @@ class real_wdt(imdb):
         for ix, obj in enumerate(objs):
             bbox = obj.find('bndbox')
             # Make pixel indexes 0-based
-            # x1 = float(bbox.find('xmin').text) - 1
-            # y1 = float(bbox.find('ymin').text) - 1
-            # x2 = float(bbox.find('xmax').text) - 1
-            # y2 = float(bbox.find('ymax').text) - 1
+            x1 = float(bbox.find('xmin').text) - 1
+            y1 = float(bbox.find('ymin').text) - 1
+            x2 = float(bbox.find('xmax').text) - 1
+            y2 = float(bbox.find('ymax').text) - 1
             # tag: yang changed https://blog.csdn.net/forest_world/article/details/106034880
-            x1 = float(bbox.find('xmin').text)
-            y1 = float(bbox.find('ymin').text)
-            x2 = float(bbox.find('xmax').text)
-            y2 = float(bbox.find('ymax').text)
+            # x1 = float(bbox.find('xmin').text)
+            # y1 = float(bbox.find('ymin').text)
+            # x2 = float(bbox.find('xmax').text)
+            # y2 = float(bbox.find('ymax').text)
 
             diffc = obj.find('difficult')
             difficult = 0 if diffc == None else int(diffc.text)
@@ -359,6 +359,8 @@ class real_wdt(imdb):
 
     def _write_voc_results_file(self, all_boxes):
         for cls_ind, cls in enumerate(self.classes):
+            if cls == 'BG':
+                continue
             print('Writing {} VOC results file'.format(cls))
             filename = self._get_voc_results_file_template().format(cls)
             with open(filename, 'wt') as f:
