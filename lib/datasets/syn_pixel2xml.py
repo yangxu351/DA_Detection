@@ -23,26 +23,20 @@ TXT_FORMAT = '.txt'
 XML_FORMAT = '.xml'
 
 
-def group_syn_object_annotation_to_form_xml(database, syn_args, data_cat='SYN_NWPU_C1'):
+def group_syn_object_annotation_to_form_xml(database, syn_args, data_cat='WindTurbine'):
     '''
-    px_thres: threshold for the length of edge lenght of b-box (at the margin)
-    whr_thres: threshold for width/height or height/width
-    group annotation files, generate bbox for each object,
-    and draw bbox for each ground truth files
+    data_cat : WindTurbine, NWPU_C1
     '''
-    if 'wdt' in data_cat:
+    if 'Wind' in data_cat:
         folder_name = f'{database}'+'_annos'
         IMG_FORMAT = '.jpg'
-        cat = data_cat
     else:
-        ix = data_cat.find('_')
-        cat = data_cat[ix+1:] # NWPU_C1
         step = int(syn_args.tile_size * syn_args.resolution)
         folder_name = 'color_all_annos_step{}'.format(step)
     lbl_path = os.path.join(syn_args.syn_data_dir, folder_name)
     print('lbl_path', lbl_path)
     if dilate:
-        if 'wdt' in data_cat:
+        if 'Wind' in data_cat:
             dila_folder_name = f'{database}'+'_annos_dilated'
         else:
             dila_folder_name = 'color_all_annos_dilated_step{}'.format(step)
@@ -98,7 +92,7 @@ def group_syn_object_annotation_to_form_xml(database, syn_args, data_cat='SYN_NW
             x_min, y_min, x_max, y_max = whwhs[j]
             # write each object to the file
             xml_file.write('\t<object>\n')
-            xml_file.write('\t\t<name>' + cat + '</name>\n')
+            xml_file.write('\t\t<name>' + data_cat + '</name>\n')
             xml_file.write('\t\t<pose>Unspecified</pose>\n')
             xml_file.write('\t\t<truncated>0</truncated>\n')
             xml_file.write('\t\t<difficult>0</difficult>\n')
@@ -148,12 +142,12 @@ def draw_bbx_on_rgb_images(syn=True):
         gbc.plot_img_with_bbx_from_xml(f, xml_file, save_bbx_path)
 
 
-def split_syn_data_trn_val(seed=17, database='syn_nwpu_bkg_px23whr3_*', data_cat='SYN_NWPU_C1'):
+def split_syn_data_trn_val(seed=17, database='syn_nwpu_bkg_px23whr3_*', data_folder='SYN_NWPU_C1', data_cat='NWPU_C1'):
 
-    data_dir = syn_args.workdir_data_txt.format(data_cat, database)
+    data_dir = syn_args.workdir_data_txt.format(data_folder, database)
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
-    if 'wdt' in data_cat:
+    if 'Wind' in data_cat:
         img_dir = os.path.join(syn_args.syn_data_dir, '{}_images'.format(database))
         IMG_FORMAT = '.jpg'
     else:
@@ -184,7 +178,7 @@ def split_syn_data_trn_val(seed=17, database='syn_nwpu_bkg_px23whr3_*', data_cat
     all_indices = np.random.permutation(num_files)
     print('num_trn', num_trn)
     for j in all_indices[: num_trn]:
-        print('all_files[i]', all_files[j])
+        # print('all_files[i]', all_files[j])
         trn_txt.write('%s\n' % os.path.basename(all_files[j]))
         trn_lbl_txt.write('%s\n' % all_files[j])
         trn_img_txt.write('%s\n' % os.path.join(img_dir, os.path.basename(all_files[j]).replace(XML_FORMAT, IMG_FORMAT)))
@@ -205,12 +199,12 @@ def split_syn_data_trn_val(seed=17, database='syn_nwpu_bkg_px23whr3_*', data_cat
     data_txt.write(f'trn_lbl_file={trn_lbl_file}\n')
     data_txt.write(f'val_img_file={val_img_file}\n')
     data_txt.write(f'val_lbl_file={val_lbl_file}\n')
-    data_txt.write(f'class_set={data_cat}')
+    data_txt.write(f'class_cat={data_cat}')
     data_txt.close()
     path_txt = open(os.path.join(data_dir, 'path.data'), 'w')
     path_txt.write(f'img_dir={img_dir}\n')
     path_txt.write(f'lbl_dir={lbl_dir}\n')
-    path_txt.write(f'class_set={data_cat}')
+    path_txt.write(f'class_cat={data_cat}')
     path_txt.close()
 
 
@@ -232,12 +226,12 @@ def parse_data_cfg(path):
 
     return options
 
-def get_args(database='', px_thres=12, whr_thres=5, data_cat='SYN_NWPU_C1', res=0.3):
+def get_args(database='', px_thres=12, whr_thres=5, data_folder='SYN_NWPU_C1', res=0.3):
     parser = argparse.ArgumentParser()
     
     parser.add_argument("--syn_base_dir", type=str,
                         help="base path of synthetic data",
-                        default=f'/data/users/yang/data/{data_cat}')
+                        default=f'/data/users/yang/data/{data_folder}')
     parser.add_argument("--syn_data_dir", type=str,
                         help="Path to folder containing synthetic images and annos ",
                         default='{}/{}')
@@ -251,7 +245,7 @@ def get_args(database='', px_thres=12, whr_thres=5, data_cat='SYN_NWPU_C1', res=
                         
     parser.add_argument("--syn_box_dir", type=str, default='{}/{}_gt_bbox_xml', help="syn box files")
 
-    if 'NWPU' in data_cat:
+    if 'NWPU' in data_folder:
         parser.add_argument("--workdir_data_txt", type=str, default='data/real_syn_nwpu_vockit/{}/{}',
                             help="syn related txt files data/real_syn_nwpu_vockit/\{syn_nwpu_c1\}/{cmt}")
     else:
@@ -295,19 +289,20 @@ if __name__ == '__main__':
     # whr_thres = 3
     # dilate = True
     # database = 'syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6'
-    # data_cat = 'SYN_NWPU_C1'
+    # data_folder = 'SYN_NWPU_C1'
     # res=0.5
-    # syn_args = get_args(database, px_thres, whr_thres, data_cat)
+    # syn_args = get_args(database, px_thres, whr_thres, data_folder)
 
     ####### for WDT
     database = 'syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40'
-    data_cat = 'synthetic_data_wdt'
-    syn_args = get_args(database, data_cat=data_cat)
+    data_folder = 'synthetic_data_wdt'
+    syn_args = get_args(database, data_folder=data_folder)
     dilate = True
+    data_cat = 'WindTurbine'
     group_syn_object_annotation_to_form_xml(database, syn_args, data_cat) #valid annos 13500 cnt 12087
-    # from datasets.config_dataset import cfg_d
-    # seed = cfg_d.DATA_SEED
-    # split_syn_data_trn_val(seed, database, data_cat)
+    from datasets.config_dataset import cfg_d
+    seed = cfg_d.DATA_SEED
+    split_syn_data_trn_val(seed, database, data_folder, data_cat)
 
 
     '''
@@ -328,5 +323,6 @@ if __name__ == '__main__':
     # pxwhr = f'px{px_thres}whr{whr_thres}'
     # seed = cfg_d.DATA_SEED
     # database = 'syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6'
-    # data_cat = 'SYN_NWPU_C1'
-    # split_syn_data_trn_val(seed, database, data_cat)
+    # data_folder = 'SYN_NWPU_C1'
+    # data_cat = 'NWPU_C1'
+    # split_syn_data_trn_val(seed, database, data_folder, data_cat)

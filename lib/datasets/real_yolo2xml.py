@@ -22,23 +22,11 @@ TXT_FORMAT = '.txt'
 XML_FORMAT = '.xml'
 
 
-def generate_xml_from_real_annotation(args, data_cat='REAL_NWPU_C1'):
-    '''
-    px_thres: threshold for the length of edge lenght of b-box (at the margin)
-    whr_thres: threshold for width/height or height/width
-    group annotation files, generate bbox for each object,
-    and draw bbox for each ground truth files
-    '''
+def generate_xml_from_real_annotation(args, data_folder='REAL_NWPU_C1', data_cat='NWPU_C1'):
     #tag: adjust for wdt
-    if 'NWPU' in data_cat:
-        data_cat = data_cat.upper()
-        ix = data_cat.find('_')
-        cat = data_cat[ix+1:] # NWPU_C1
-    else: # wdt
-        cat = data_cat
 
     yolo_dila_annos_files = []
-    if '0' in data_cat: # background
+    if '0' in data_folder: # background
         imgs_dir = os.path.join(args.real_base_dir, 'all_negative_image_set')
         annos_dir = os.path.join(args.real_base_dir, 'all_negative_label_set')
     else:
@@ -81,7 +69,7 @@ def generate_xml_from_real_annotation(args, data_cat='REAL_NWPU_C1'):
         xml_file.write('\t<filename>' + img_name + '</filename>\n')
         xml_file.write('\t<path>' + img_f + '</path>\n')
         xml_file.write('\t<source>\n')
-        xml_file.write('\t\t<database>'+ data_cat + '</database>\n')
+        xml_file.write('\t\t<database>'+ data_folder + '</database>\n')
         xml_file.write('\t</source>\n')
         xml_file.write('\t<size>\n')
         xml_file.write('\t\t<width>' + str(image_width) + '</width>\n')
@@ -93,11 +81,11 @@ def generate_xml_from_real_annotation(args, data_cat='REAL_NWPU_C1'):
         for j in range(df.shape[0]):
             x_min, y_min, x_max, y_max = min_ws[j], min_hs[j], max_ws[j], max_hs[j]
             #tag: adjust for wdt
-            if 'NWPU' in data_cat:
+            if 'NWPU' in data_folder:
                 cat_id = int(df[j, 5] + 1) # change the cat id, start from 1, new cat_id=0--> background
-                new_data_cat = cat[:-1] + str(cat_id) # NWPU_C*
+                new_data_cat = data_cat[:-1] + str(cat_id) # NWPU_C*
             else:
-                cat_id = int(df[j,  0])
+                cat_id = int(df[j,  0] + 1) # new cat_id=0--> background
                 new_data_cat = data_cat
             # write each object to the file
             xml_file.write('\t<object>\n')
@@ -144,9 +132,9 @@ def draw_bbx_on_rgb_images():
         gbc.plot_img_with_bbx_from_xml(f, xml_file, save_bbx_path)
 
 
-def split_real_nwpu_background_trn_val(seed=17, data_cat='real_nwpu_c0'):
-    data_cat = data_cat.upper()
-    data_dir = args.workdir_data_txt.format(data_cat)
+def split_real_nwpu_background_trn_val(seed=17, data_folder='real_nwpu_c0', data_cat='NWPU_C0'):
+    data_folder = data_folder.upper()
+    data_dir = args.workdir_data_txt.format(data_folder)
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
@@ -159,7 +147,7 @@ def split_real_nwpu_background_trn_val(seed=17, data_cat='real_nwpu_c0'):
     data_txt = open(os.path.join(data_dir, 'path.data'), 'w')
     data_txt.write(f'img_dir={bkg_img_dir}\n')
     data_txt.write(f'lbl_dir={bkg_xml_dir}\n')
-    data_txt.write(f'class_set={data_cat}')
+    data_txt.write(f'class_cat={data_cat}')
     data_txt.close()
 
     trn_txt = open(os.path.join(data_dir, 'train_seed{}.txt'.format(seed)), 'w')
@@ -182,7 +170,7 @@ def split_real_nwpu_background_trn_val(seed=17, data_cat='real_nwpu_c0'):
     trn_txt.close()
 
 
-def split_real_data_train_val(data_seed = 0):
+def split_real_data_train_val(data_seed = 0, data_cat='WindTurbine'):
 
     files = glob.glob(os.path.join(args.real_voc_annos_dir, '*.xml'))
     files_name = sorted([os.path.basename(f).split(".")[0] for f in files])
@@ -220,7 +208,7 @@ def split_real_data_train_val(data_seed = 0):
         data_txt = open(os.path.join(args.workdir_data_txt, 'path.data'), 'w')
         data_txt.write(f'img_dir={args.real_img_dir}\n')
         data_txt.write(f'lbl_dir={args.real_voc_annos_dir}\n')
-        data_txt.write(f'class_set={data_cat}')
+        data_txt.write(f'class_cat={data_cat}')
         data_txt.close()
     except FileExistsError as e:
         print(e)
@@ -286,14 +274,12 @@ def parse_data_cfg(path):
 
     return options
 
-def get_args(data_cat='REAL_NWPU_C1'):
+def get_args(data_folder='REAL_NWPU_C1', data_cat='NWPU_C1'):
     parser = argparse.ArgumentParser()
-    if 'NWPU' in data_cat:
-        inx = data_cat.find('_') +1
-        cat = data_cat[inx:].upper() #  'NWPU_C1'
+    if 'NWPU' in data_folder:
         parser.add_argument("--real_base_dir", type=str,
                             help="base path of real data",
-                            default=f'/data/users/yang/data/{data_cat}')
+                            default=f'/data/users/yang/data/{data_folder}')
 
         parser.add_argument("--real_img_dir", type=str,
                             help="Path to folder containing real images ",
@@ -306,8 +292,7 @@ def get_args(data_cat='REAL_NWPU_C1'):
                             help="syn annos in voc format .xml \{real_base_dir\}/{cat}_all_xml_annos")     
                         
     else: #'wdt'#tag: adjust for wdt
-        cat = data_cat
-        parser.add_argument("--workdir_data_txt", type=str, default=f'data/real_syn_wdt_vockit/{data_cat}',
+        parser.add_argument("--workdir_data_txt", type=str, default=f'data/real_syn_wdt_vockit/{data_folder}',
                             help="syn related txt files data/real_syn_wdt_vockit/\{xilin_wdt\}")
 
         parser.add_argument("--real_base_dir", type=str,default='/data/users/yang/data/wind_turbine', help="base path of synthetic data")
@@ -321,9 +306,9 @@ def get_args(data_cat='REAL_NWPU_C1'):
     parser.add_argument("--val_percent", type=float, default=0.3, help="train:val=0.7:0.3")
     
     args = parser.parse_args()
-    args.real_img_dir = args.real_img_dir.format(args.real_base_dir, cat, args.tile_size)
-    args.real_yolo_annos_dir = args.real_yolo_annos_dir.format(args.real_base_dir, cat)
-    args.real_voc_annos_dir = args.real_voc_annos_dir.format(args.real_base_dir, cat)
+    args.real_img_dir = args.real_img_dir.format(args.real_base_dir, data_folder, args.tile_size)
+    args.real_yolo_annos_dir = args.real_yolo_annos_dir.format(args.real_base_dir, data_folder)
+    args.real_voc_annos_dir = args.real_voc_annos_dir.format(args.real_base_dir, data_folder)
 
     return args
 
@@ -343,15 +328,17 @@ if __name__ == '__main__':
 
     ######### for wdt
     #tag: adjust for wdt
-    # data_cat = 'xilin_wdt'
-    # args = get_args(data_cat)
-    # generate_xml_from_real_annotation(args, data_cat)
+    data_folder = 'xilin_wdt'
+    data_cat = 'WindTurbine'
+    args = get_args(data_folder, data_cat)
+    generate_xml_from_real_annotation(args, data_folder, data_cat)
 
     ''' split real dataset of wdt into train val'''
-    data_cat = 'xilin_wdt'
-    args = get_args(data_cat)
+    data_folder = 'xilin_wdt'
+    data_cat = 'WindTurbine'
+    args = get_args(data_folder, data_cat)
     data_seed = 0
-    split_real_data_train_val(data_seed)
+    split_real_data_train_val(data_seed, data_cat)
 
 
     '''
