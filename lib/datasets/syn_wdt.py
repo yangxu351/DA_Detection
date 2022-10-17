@@ -69,6 +69,8 @@ class syn_wdt(imdb):
         self._class_to_ind = dict(zip(self.classes, xrange(self.num_classes)))
         self._image_ext = IMG_SUFFIX # '.png'
         self._image_index = self._load_image_set_index()
+        self._img_dir = self._get_img_lbl_dir('img_dir')
+        self._lbl_dir = self._get_img_lbl_dir('lbl_dir')
         self._image_arr, self._label_arr = self._load_image_label_arr()
         print('_image_index', len(self._image_index))
         print('_image_arr', self._image_arr.shape)
@@ -96,7 +98,7 @@ class syn_wdt(imdb):
         return path of images(.png), annos(.xml)
                 class_set='syn_nwpu_c1'
         """
-        data = parse_data_cfg(os.path.join(self._devkit_path, 'data_list.data'))
+        data = parse_data_cfg(os.path.join(self._devkit_path, 'path.data'))
         return data[key]
 
     def get_img_set_file(self):
@@ -156,12 +158,9 @@ class syn_wdt(imdb):
         """
         Construct an image path from the image's "index" identifier.
         """
-        # image_path = os.path.join(self._img_dir, index)
-        # assert os.path.exists(image_path), \
-        #     'Path does not exist: {}'.format(image_path)
-        img_set_file = self.get_img_set_file()
-        df_img_path = pd.read_csv(img_set_file, header=None)
-        image_path = df_img_path.iloc[index][0]
+        image_path = os.path.join(self._img_dir, index + self._image_ext)
+        assert os.path.exists(image_path), \
+            'Path does not exist: {}'.format(image_path)
         return image_path
 
 
