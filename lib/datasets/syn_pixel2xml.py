@@ -209,7 +209,7 @@ def split_syn_data_trn_val(seed=17, database='syn_nwpu_bkg_px23whr3_*', data_cat
     data_txt.close()
     path_txt = open(os.path.join(data_dir, 'path.data'), 'w')
     path_txt.write(f'img_dir={img_dir}\n')
-    path_txt.write(f'val_dir={lbl_dir}\n')
+    path_txt.write(f'lbl_dir={lbl_dir}\n')
     path_txt.write(f'class_set={data_cat}')
     path_txt.close()
 
