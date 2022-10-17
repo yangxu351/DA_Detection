@@ -49,14 +49,16 @@ IMG_SUFFIX = '.jpg'
 class real_wdt(imdb):
     def __init__(self, image_set='xilin_wdt_test', devkit_path=None):
         imdb.__init__(self, image_set)
-        cix = image_set.rfind('_')
-        self._class_set = image_set[:cix] 
+        
+        self._class_set = cfg_d.DATA_CAT
+        database = cfg_d.DATABASE_T # 'xilin_wdt'
         
         self._year = '2022'
+        cix = image_set.rfind('_')
         self._image_set = image_set[cix+1:].lower() # test
-        self._devkit_path = os.path.join(cfg_d.DEV_DATA_DIR, self._class_set) #self._get_default_path() if devkit_path is None \
+        self._devkit_path = os.path.join(cfg_d.DEV_DATA_DIR, database) #self._get_default_path() if devkit_path is None \
             #else devkit_path
-        self._data_path = os.path.join(cfg_d.BASE_DATA_DIR, cfg_d.DATA_DIR_T, self._class_set)
+        self._data_path = os.path.join(cfg_d.BASE_DATA_DIR, cfg_d.DATA_DIR_T, database)
 
         print('data path', self._data_path)
         self._classes = ['BG', 'WindTurbine']#,  # __background__ always index 0
@@ -188,11 +190,11 @@ class real_wdt(imdb):
         """
         cache_file = os.path.join(self.cache_path, self.name + '_gt_roidb.pkl')
         #tag: yang comments
-        if os.path.exists(cache_file):
-            with open(cache_file, 'rb') as fid:
-                roidb = pickle.load(fid)
-            print('{} gt roidb loaded from {}'.format(self.name, cache_file))
-            return roidb
+        # if os.path.exists(cache_file):
+        #     with open(cache_file, 'rb') as fid:
+        #         roidb = pickle.load(fid)
+        #     print('{} gt roidb loaded from {}'.format(self.name, cache_file))
+        #     return roidb
 
         gt_roidb = [self._load_pascal_annotation(index)
                     for index in self.image_index]
@@ -273,7 +275,7 @@ class real_wdt(imdb):
         Load image and bounding boxes info from XML file in the PASCAL VOC
         format. Exclude bounding boxes which are not included in self._classes.
         """
-        lbl_file = self._label_arr[index]
+        lbl_file = os.path.join(self._lbl_dir, f'{index}.xml')
         tree = ET.parse(lbl_file)
         objs = tree.findall('object')
 
@@ -445,8 +447,8 @@ class real_wdt(imdb):
 
 if __name__ == '__main__':
     
-    # d = real_wdt('xilin_wdt_train')
-    d = real_wdt('xilin_wdt_val')
+    d = real_wdt('xilin_wdt_train')
+    # d = real_wdt('xilin_wdt_val')
     
     res = d.roidb
     print('len res', len(res))
