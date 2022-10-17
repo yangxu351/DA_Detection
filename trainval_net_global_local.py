@@ -74,10 +74,11 @@ if __name__ == '__main__':
     print('{:d} source roidb entries'.format(len(roidb)))
     print('{:d} target roidb entries'.format(len(roidb_t)))
 
-    output_dir = os.path.join(args.save_dir, args.net, args.dataset, args.database)
+    time_marker = time.strftime('%Y%m%d_%H%M', time.localtime())
+    output_dir = os.path.join(args.save_dir, args.net, args.dataset, args.database, time_marker)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-
+    
     sampler_batch = sampler(train_size, args.batch_size)
     sampler_batch_t = sampler(train_size_t, args.batch_size)
 
@@ -177,7 +178,7 @@ if __name__ == '__main__':
 
     if args.use_tfboard:
         from tensorboardX import SummaryWriter
-        log_dir = os.path.join(args.log_dir, args.net, args.dataset, args.database)
+        log_dir = os.path.join(args.log_dir, args.net, args.dataset, args.database, time_marker)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
         logger = SummaryWriter(log_dir)
@@ -305,9 +306,10 @@ if __name__ == '__main__':
         # tag: yang changed
         if epoch % 10 ==0 or epoch == args.max_epochs-1:
             #'net_{}_target_{}_lr{}_bs{}_eta_{}_lc{}_gl{}_gamma_{}_session_{}_epoch_{}.pth'
+            
             save_name = os.path.join(output_dir,
-                                    'net_{}_target_{}_lr{}_bs{}_eta_{}_lc{}_gl{}_gamma_{}_session_{}_epoch_{}_noflip.pth'.format(
-                                        args.net, args.dataset_t, args.lr, args.batch_size, args.eta,
+                                    'target_{}_lr{}_bs{}_eta_{}_lc{}_gl{}_gamma_{}_session_{}_epoch_{}_noflip.pth'.format(
+                                        args.dataset_t, args.lr, args.batch_size, args.eta,
                                         args.lc, args.gc, args.gamma,
                                         args.session, epoch))                             
             save_checkpoint({
