@@ -63,7 +63,7 @@ class syn_wdt(imdb):
             #else devkit_path
         self._data_path = os.path.join(cfg_d.BASE_DATA_DIR, data_cat, database)
         print('data path', self._data_path)
-        self._classes = ['BG', 'synthetic_data_wdt'] # always index 0
+        self._classes = ['BG', 'WindTurbine'] # always index 0
                         #  'NWPU_C1') #, # one pair of engines mounted at tail 
                         #  'NC2') # two pairs of engines under wings 
         self._class_to_ind = dict(zip(self.classes, xrange(self.num_classes)))

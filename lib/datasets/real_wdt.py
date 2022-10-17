@@ -59,7 +59,7 @@ class real_wdt(imdb):
         self._data_path = os.path.join(cfg_d.BASE_DATA_DIR, cfg_d.DATA_DIR_T, self._class_set)
 
         print('data path', self._data_path)
-        self._classes = ['BG', 'xilin_wdt']#,  # __background__ always index 0
+        self._classes = ['BG', 'WindTurbine']#,  # __background__ always index 0
                         #  'NWPU_C1') #, # one pair of engines mounted at tail 
                         #  'NC2') # two pairs of engines under wings 
         self._class_to_ind = dict(zip(self.classes, xrange(self.num_classes)))
