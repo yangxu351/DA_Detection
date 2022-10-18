@@ -121,8 +121,11 @@ class imdb(object):
       boxes = self.roidb[i]['boxes'].copy()
       oldx1 = boxes[:, 0].copy()
       oldx2 = boxes[:, 2].copy()
-      boxes[:, 0] = widths[i] - oldx2 - 1
-      boxes[:, 2] = widths[i] - oldx1 - 1
+      # boxes[:, 0] = widths[i] - oldx2 - 1
+      # boxes[:, 2] = widths[i] - oldx1 - 1
+      #tag: https://github.com/jwyang/faster-rcnn.pytorch/issues/594#issuecomment-518011229
+      boxes[:, 0] = widths[i] - oldx2
+      boxes[:, 2] = widths[i] - oldx1
       #tag: yang adds from https://blog.csdn.net/forest_world/article/details/106034880
       for b in range(len(boxes)):
         if boxes[b][2]< boxes[b][0]:

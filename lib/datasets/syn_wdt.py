@@ -178,11 +178,11 @@ class syn_wdt(imdb):
         """
         cache_file = os.path.join(self.cache_path, self.name + '_gt_roidb.pkl')
         # tag: comment 
-        # if os.path.exists(cache_file):
-        #     with open(cache_file, 'rb') as fid:
-        #         roidb = pickle.load(fid)
-        #     print('{} gt roidb loaded from {}'.format(self.name, cache_file))
-        #     return roidb
+        if os.path.exists(cache_file):
+            with open(cache_file, 'rb') as fid:
+                roidb = pickle.load(fid)
+            print('{} gt roidb loaded from {}'.format(self.name, cache_file))
+            return roidb
 
         gt_roidb = [self._load_pascal_annotation(index) for index in self.image_index]
         with open(cache_file, 'wb') as fid:
@@ -300,15 +300,16 @@ class syn_wdt(imdb):
         for ix, obj in enumerate(objs):
             bbox = obj.find('bndbox')
             # Make pixel indexes 0-based
-            x1 = float(bbox.find('xmin').text) - 1
-            y1 = float(bbox.find('ymin').text) - 1
-            x2 = float(bbox.find('xmax').text) - 1
-            y2 = float(bbox.find('ymax').text) - 1
+            # x1 = float(bbox.find('xmin').text) - 1
+            # y1 = float(bbox.find('ymin').text) - 1
+            # x2 = float(bbox.find('xmax').text) - 1
+            # y2 = float(bbox.find('ymax').text) - 1
             # tag: yang changed https://blog.csdn.net/forest_world/article/details/106034880
-            # x1 = float(bbox.find('xmin').text)
-            # y1 = float(bbox.find('ymin').text)
-            # x2 = float(bbox.find('xmax').text)
-            # y2 = float(bbox.find('ymax').text)
+            #https://github.com/jwyang/faster-rcnn.pytorch/issues/594#issuecomment-518011229
+            x1 = float(bbox.find('xmin').text)
+            y1 = float(bbox.find('ymin').text)
+            x2 = float(bbox.find('xmax').text)
+            y2 = float(bbox.find('ymax').text)
 
 
             diffc = obj.find('difficult')
@@ -441,8 +442,8 @@ class syn_wdt(imdb):
 if __name__ == '__main__':
     database = 'syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40'
     data_cat = 'WindTurbine'
-    # d = syn_wdt('synthetic_data_wdt_train', database) # 8461
-    d = syn_wdt('synthetic_data_wdt_val', database) # 3626
+    d = syn_wdt('synthetic_data_wdt_train', database) # 8461
+    # d = syn_wdt('synthetic_data_wdt_val', database) # 3626
     res = d.roidb
     print('len res', len(res))
 

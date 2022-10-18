@@ -190,11 +190,11 @@ class real_wdt(imdb):
         """
         cache_file = os.path.join(self.cache_path, self.name + '_gt_roidb.pkl')
         #tag: yang comments
-        # if os.path.exists(cache_file):
-        #     with open(cache_file, 'rb') as fid:
-        #         roidb = pickle.load(fid)
-        #     print('{} gt roidb loaded from {}'.format(self.name, cache_file))
-        #     return roidb
+        if os.path.exists(cache_file):
+            with open(cache_file, 'rb') as fid:
+                roidb = pickle.load(fid)
+            print('{} gt roidb loaded from {}'.format(self.name, cache_file))
+            return roidb
 
         gt_roidb = [self._load_pascal_annotation(index)
                     for index in self.image_index]
@@ -308,15 +308,16 @@ class real_wdt(imdb):
         for ix, obj in enumerate(objs):
             bbox = obj.find('bndbox')
             # Make pixel indexes 0-based
-            x1 = float(bbox.find('xmin').text) - 1
-            y1 = float(bbox.find('ymin').text) - 1
-            x2 = float(bbox.find('xmax').text) - 1
-            y2 = float(bbox.find('ymax').text) - 1
+            # x1 = float(bbox.find('xmin').text) - 1
+            # y1 = float(bbox.find('ymin').text) - 1
+            # x2 = float(bbox.find('xmax').text) - 1
+            # y2 = float(bbox.find('ymax').text) - 1
             # tag: yang changed https://blog.csdn.net/forest_world/article/details/106034880
-            # x1 = float(bbox.find('xmin').text)
-            # y1 = float(bbox.find('ymin').text)
-            # x2 = float(bbox.find('xmax').text)
-            # y2 = float(bbox.find('ymax').text)
+            # https://github.com/jwyang/faster-rcnn.pytorch/issues/594#issuecomment-518011229
+            x1 = float(bbox.find('xmin').text)
+            y1 = float(bbox.find('ymin').text)
+            x2 = float(bbox.find('xmax').text)
+            y2 = float(bbox.find('ymax').text)
 
             diffc = obj.find('difficult')
             difficult = 0 if diffc == None else int(diffc.text)
@@ -447,8 +448,8 @@ class real_wdt(imdb):
 
 if __name__ == '__main__':
     
-    d = real_wdt('xilin_wdt_train')
-    # d = real_wdt('xilin_wdt_val')
+    # d = real_wdt('xilin_wdt_train')
+    d = real_wdt('xilin_wdt_val')
     
     res = d.roidb
     print('len res', len(res))
