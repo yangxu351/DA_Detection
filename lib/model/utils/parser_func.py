@@ -10,10 +10,10 @@ def parse_args():
     ###########################################################=========data set
     parser.add_argument('--dataset', dest='dataset',
                         help='source training dataset: SYN_NWPU_C1, synthetic_data_wdt',
-                        default=cfg_d.DATASET, type=str)
+                        default=cfg_d.DATA_DIR_S, type=str)
     parser.add_argument('--dataset_test', dest='dataset_test',
                         help='test dataset: xilin_wdt_val',
-                        default=cfg_d.DATASET_TEST, type=str)
+                        default=cfg_d.DATA_DIR_T, type=str)
 
     parser.add_argument('--database', dest='database',
                         help='source training database: syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6',
