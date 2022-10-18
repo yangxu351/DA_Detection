@@ -322,7 +322,8 @@ class resnet(_fasterRCNN):
         self.class_agnostic = class_agnostic
         self.lc = lc
         self.layers = num_layers
-        # if self.layers == 50:
+        if self.layers == 50:
+            self.model_path = '/data/users/yang/code/DA_Detection/pretrained_models/resnet50.pth'
         #     self.model_path = '/home/grad3/keisaito/data/pretrained_model/resnet50_caffe.pth'
         _fasterRCNN.__init__(self, classes, class_agnostic, lc)
 
@@ -346,7 +347,7 @@ class resnet(_fasterRCNN):
         feat_d = 2048
         if self.lc:
             feat_d += 128
-        #if self.gc:
+        # if self.gc:
         #    feat_d += 128
         self.RCNN_cls_score = nn.Linear(feat_d, self.n_classes)
         if self.class_agnostic:
