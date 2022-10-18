@@ -56,8 +56,8 @@ if __name__ == '__main__':
     # torch.cuda.current_device()
     # torch.cuda._initialized = True
     # print('----CUDA--------', )
-    device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-    print("Using {} device training.".format(device.type))
+    # device = torch.device(args.device if torch.cuda.is_available() else "cpu")
+    # print("Using {} device training.".format(device.type))
 
     # train set
     # -- Note: Use validation set and disable the flipped to enable faster loading.
@@ -98,10 +98,10 @@ if __name__ == '__main__':
     gt_boxes = torch.FloatTensor(1)
     # ship to cuda
     if args.cuda:
-        im_data = im_data.cuda(device)
-        im_info = im_info.cuda(device)
-        num_boxes = num_boxes.cuda(device)
-        gt_boxes = gt_boxes.cuda(device)
+        im_data = im_data.cuda()
+        im_info = im_info.cuda()
+        num_boxes = num_boxes.cuda()
+        gt_boxes = gt_boxes.cuda()
 
     # make variable
     im_data = Variable(im_data)
@@ -152,7 +152,7 @@ if __name__ == '__main__':
         optimizer = torch.optim.SGD(params, momentum=cfg.TRAIN.MOMENTUM)
 
     if args.cuda:
-        fasterRCNN.cuda(device)
+        fasterRCNN.cuda()
 
     if args.resume:
         checkpoint = torch.load(args.load_name)
@@ -167,9 +167,9 @@ if __name__ == '__main__':
 
     if args.mGPUs:
         fasterRCNN = nn.DataParallel(fasterRCNN)
-    # iters_per_epoch = int(10000 / args.batch_size)
+    iters_per_epoch = int(10000 / args.batch_size)
     # tag:yang.xu
-    iters_per_epoch = int(train_size / args.batch_size)
+    # iters_per_epoch = int(train_size / args.batch_size)
     
     if args.ef:
         FL = EFocalLoss(class_num=2, gamma=args.gamma)
@@ -223,7 +223,7 @@ if __name__ == '__main__':
             loss_temp += loss.item()
 
             # domain label
-            domain_s = Variable(torch.zeros(out_d.size(0)).long().cuda(device))
+            domain_s = Variable(torch.zeros(out_d.size(0)).long().cuda())
             # global alignment loss
             dloss_s = 0.5 * FL(out_d, domain_s)
             # local alignment loss
@@ -237,7 +237,7 @@ if __name__ == '__main__':
             num_boxes.data.resize_(1).zero_()
             out_d_pixel, out_d = fasterRCNN(im_data, im_info, gt_boxes, num_boxes, target=True)
             # domain label
-            domain_t = Variable(torch.ones(out_d.size(0)).long().cuda(device))
+            domain_t = Variable(torch.ones(out_d.size(0)).long().cuda())
             dloss_t = 0.5 * FL(out_d, domain_t)
             # local alignment loss
             dloss_t_p = 0.5 * torch.mean((1 - out_d_pixel) ** 2)
@@ -308,10 +308,10 @@ if __name__ == '__main__':
             #'net_{}_target_{}_lr{}_bs{}_eta_{}_lc{}_gl{}_gamma_{}_session_{}_epoch_{}.pth'
             
             save_name = os.path.join(output_dir,
-                                    'target_{}_lr{}_bs{}_eta_{}_lc{}_gl{}_gamma_{}_session_{}_epoch_{}_noflip.pth'.format(
+                                    'target_{}_lr{}_bs{}_eta_{}_lc{}_gl{}_gamma_{}_session_{}_epoch_{}_flip{}.pth'.format(
                                         args.dataset_t, args.lr, args.batch_size, args.eta,
                                         args.lc, args.gc, args.gamma,
-                                        args.session, epoch))                             
+                                        args.session, epoch, cfg.TRAIN.USE_FLIPPED))                             
             save_checkpoint({
                 'session': args.session,
                 'epoch': epoch + 1,

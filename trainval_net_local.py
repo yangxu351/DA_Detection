@@ -46,10 +46,15 @@ if __name__ == '__main__':
     # torch.backends.cudnn.benchmark = True
     if torch.cuda.is_available() and not args.cuda:
         print("WARNING: You have a CUDA device, so you should probably run with --cuda")
+    
+    # device = torch.device(args.device if torch.cuda.is_available() else "cpu")
+    # print("Using {} device training.".format(device.type))
 
     # train set
     # -- Note: Use validation set and disable the flipped to enable faster loading.
-    cfg.TRAIN.USE_FLIPPED = True
+    # cfg.TRAIN.USE_FLIPPED = True
+    # tag: yang changed
+    cfg.TRAIN.USE_FLIPPED = False
     cfg.USE_GPU_NMS = args.cuda
     imdb, roidb, ratio_list, ratio_index = combined_roidb(args.imdb_name)
     train_size = len(roidb)
@@ -155,6 +160,7 @@ if __name__ == '__main__':
     if args.mGPUs:
         fasterRCNN = nn.DataParallel(fasterRCNN)
     iters_per_epoch = int(10000 / args.batch_size)
+
     if args.ef:
         FL = EFocalLoss(class_num=2, gamma=args.gamma)
     else:
@@ -214,7 +220,7 @@ if __name__ == '__main__':
             out_d_pixel = fasterRCNN(im_data, im_info, gt_boxes, num_boxes, target=True)
             # backward
             dloss_t_p = torch.mean((1 - out_d_pixel) ** 2) * 0.5
-            if args.dataset == 'SYN_NWPU_C1':#sim10k
+            if args.dataset == 'WindTurbine':#sim10k
                 loss += (dloss_s_p + dloss_t_p) * args.eta  # + 0.5*(diff_t + diff_s)
             else:
                 loss += (dloss_s_p + dloss_t_p)
@@ -264,21 +270,29 @@ if __name__ == '__main__':
                 loss_temp = 0
                 # start = time.time()
                 # start = time.strftime("%Y_%m_%d_%H_%M_%S")
-        save_name = os.path.join(output_dir,
-                                 'local_target_{}_eta_{}_efocal_{}_local_context_{}_gamma_{}_session_{}_epoch_{}_step_{}.pth'.format(
-                                     args.dataset_t, args.eta, args.ef,
-                                     args.lc, args.gamma,
-                                     args.session, epoch,
-                                     step))
-        save_checkpoint({
-            'session': args.session,
-            'epoch': epoch + 1,
-            'model': fasterRCNN.module.state_dict() if args.mGPUs else fasterRCNN.state_dict(),
-            'optimizer': optimizer.state_dict(),
-            'pooling_mode': cfg.POOLING_MODE,
-            'class_agnostic': args.class_agnostic,
-        }, save_name)
-        print('save model: {}'.format(save_name))
+        # save_name = os.path.join(output_dir,
+        #                          'local_target_{}_eta_{}_efocal_{}_local_context_{}_gamma_{}_session_{}_epoch_{}_step_{}.pth'.format(
+        #                              args.dataset_t, args.eta, args.ef,
+        #                              args.lc, args.gamma,
+        #                              args.session, epoch,
+        #                              step))
+        if epoch % 10 ==0 or epoch == args.max_epochs-1:
+            #'net_{}_target_{}_lr{}_bs{}_eta_{}_lc{}_gl{}_gamma_{}_session_{}_epoch_{}.pth'
+            
+            save_name = os.path.join(output_dir,
+                                    'target_{}_lr{}_bs{}_eta_{}_lc{}_gl{}_gamma_{}_session_{}_epoch_{}_flip{}.pth'.format(
+                                        args.dataset_t, args.lr, args.batch_size, args.eta,
+                                        args.lc, args.gc, args.gamma,
+                                        args.session, epoch, cfg.TRAIN.USE_FLIPPED))  
+            save_checkpoint({
+                'session': args.session,
+                'epoch': epoch + 1,
+                'model': fasterRCNN.module.state_dict() if args.mGPUs else fasterRCNN.state_dict(),
+                'optimizer': optimizer.state_dict(),
+                'pooling_mode': cfg.POOLING_MODE,
+                'class_agnostic': args.class_agnostic,
+            }, save_name)
+            print('save model: {}'.format(save_name))
 
     if args.use_tfboard:
         logger.close()
