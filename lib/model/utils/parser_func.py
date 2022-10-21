@@ -1,6 +1,7 @@
 import argparse
 from model.utils.config import cfg, cfg_from_file, cfg_from_list
 from lib.datasets.config_dataset import cfg_d
+# from model.utils.parameters import *
 
 def parse_args():
     """
@@ -26,13 +27,13 @@ def parse_args():
 
     parser.add_argument('--net', dest='net',
                         help='vgg16, res101 res50',
-                        default='res50', type=str)
+                        default='res101', type=str)
     parser.add_argument('--start_epoch', dest='start_epoch',
                         help='starting epoch',
                         default=1, type=int)
     parser.add_argument('--epochs', dest='max_epochs',
                         help='number of epochs to train',
-                        default=50, type=int)
+                        default=30, type=int)
     parser.add_argument('--gamma', dest='gamma',
                         help='value of gamma',
                         default=5, type=float)
@@ -54,7 +55,7 @@ def parse_args():
                         default="images")  #??????????                     
     ###########################################################=========end dir
     parser.add_argument('--load_name', dest='load_name',
-                        help='path to load models', default="net_res50_target_xilin_wdt_lr0.0001_eta_0.1_lcTrue_glTrue_gamma_5_session_1_epoch_50.pth",
+                        help='time/net_res50_target_xilin_wdt_lr0.0001_eta_0.1_lcTrue_glTrue_gamma_5_session_1_epoch_50.pth', default="",
                         type=str)
     parser.add_argument('--nw', dest='num_workers',
                         help='number of worker to load data',
@@ -63,9 +64,12 @@ def parse_args():
                         help='whether use CUDA', default=True,
                         action='store_true')
     #fixme:
+    # parser.add_argument('--device', dest='device', 
+    #                     help=' CUDA device', default='cuda:1',
+    #                     type=str)
     parser.add_argument('--device', dest='device', 
-                        help=' CUDA device', default='cuda:1',
-                        type=str)
+                        help=' CUDA device', default=1,
+                        type=int)
 
     parser.add_argument('--detach', dest='detach',
                         help='whether use detach',
@@ -73,10 +77,10 @@ def parse_args():
     parser.add_argument('--ef', dest='ef',
                         help='whether use exponential focal loss',
                         action='store_true')
-    parser.add_argument('--lc', dest='lc', default=True,
+    parser.add_argument('--lc', dest='lc', 
                         help='whether use context vector for pixel level',
                         action='store_true')
-    parser.add_argument('--gc', dest='gc', default=True,
+    parser.add_argument('--gc', dest='gc', 
                         help='whether use context vector for global level',
                         action='store_true')
     parser.add_argument('--ls', dest='large_scale',
