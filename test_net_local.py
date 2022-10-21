@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
     print('Using config:')
     pprint.pprint(cfg)
-    device = torch.cuda(args.device)
+    # device = torch.cuda(args.device)
     cfg.TRAIN.USE_FLIPPED = False
     imdb, roidb, ratio_list, ratio_index = combined_roidb(args.imdbval_name, False)
     imdb.competition_mode(on=True)
@@ -69,6 +69,8 @@ if __name__ == '__main__':
         fasterRCNN = vgg16(imdb.classes, pretrained=True, class_agnostic=args.class_agnostic, lc=args.lc)
     elif args.net == 'res101':
         fasterRCNN = resnet(imdb.classes, 101, pretrained=True, class_agnostic=args.class_agnostic, lc=args.lc)
+    elif args.net == 'res50':
+        fasterRCNN = resnet(imdb.classes, 50, pretrained=True, class_agnostic=args.class_agnostic, lc=args.lc)
 
     else:
         print("network is not defined")
@@ -77,7 +79,9 @@ if __name__ == '__main__':
     fasterRCNN.create_architecture()
 
     print("load checkpoint %s" % (args.load_name))
-    checkpoint = torch.load(args.load_name)
+    print("load checkpoint %s" % (args.load_name))
+    weight_dir =f'models/{args.dataset}/{args.database}/{args.net}/{args.load_name}'
+    checkpoint = torch.load(weight_dir)
     fasterRCNN.load_state_dict(checkpoint['model'])
     if 'pooling_mode' in checkpoint.keys():
         cfg.POOLING_MODE = checkpoint['pooling_mode']
@@ -91,10 +95,10 @@ if __name__ == '__main__':
 
     # ship to cuda
     if args.cuda:
-        im_data = im_data.cuda(device)
-        im_info = im_info.cuda(device)
-        num_boxes = num_boxes.cuda(device)
-        gt_boxes = gt_boxes.cuda(device)
+        im_data = im_data.cuda()
+        im_info = im_info.cuda()
+        num_boxes = num_boxes.cuda()
+        gt_boxes = gt_boxes.cuda()
 
     # make variable
     im_data = Variable(im_data)
@@ -106,7 +110,7 @@ if __name__ == '__main__':
         cfg.CUDA = True
 
     if args.cuda:
-        fasterRCNN.cuda(device)
+        fasterRCNN.cuda()
 
     start = time.time()
     max_per_image = 100
@@ -157,12 +161,12 @@ if __name__ == '__main__':
             if cfg.TRAIN.BBOX_NORMALIZE_TARGETS_PRECOMPUTED:
                 # Optionally normalize targets by a precomputed mean and stdev
                 if args.class_agnostic:
-                    box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).cuda(device) \
-                                 + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).cuda(device)
+                    box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).cuda() \
+                                 + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).cuda()
                     box_deltas = box_deltas.view(1, -1, 4)
                 else:
-                    box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).cuda(device) \
-                                 + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).cuda(device)
+                    box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).cuda() \
+                                 + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).cuda()
                     box_deltas = box_deltas.view(1, -1, 4 * len(imdb.classes))
 
             pred_boxes = bbox_transform_inv(boxes, box_deltas, 1)

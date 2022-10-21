@@ -83,7 +83,7 @@ if __name__ == '__main__':
   fasterRCNN.create_architecture()
 
   print("load checkpoint %s" % (args.load_name))
-  weight_dir =f'models/{args.net}/{args.dataset}/{args.database}/{args.load_name}'
+  weight_dir =f'models/{args.dataset}/{args.database}/{args.net}/{args.load_name}'
   checkpoint = torch.load(weight_dir)
   fasterRCNN.load_state_dict(checkpoint['model'])
   if 'pooling_mode' in checkpoint.keys():
