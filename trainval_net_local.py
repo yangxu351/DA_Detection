@@ -27,6 +27,20 @@ from model.utils.net_utils import weights_normal_init, save_net, load_net, \
 
 from model.utils.parser_func import parse_args, set_dataset_args
 
+
+def init_seeds(seed=0):
+    # tag: https://blog.csdn.net/hxxjxw/article/details/120160135
+    import random
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+
+
 if __name__ == '__main__':
 
     args = parse_args()
@@ -41,7 +55,8 @@ if __name__ == '__main__':
 
     print('Using config:')
     pprint.pprint(cfg)
-    np.random.seed(cfg.RNG_SEED)
+    # np.random.seed(cfg.RNG_SEED)
+    init_seeds(cfg.RNG_SEED)
 
     # torch.backends.cudnn.benchmark = True
     if torch.cuda.is_available() and not args.cuda:
@@ -49,12 +64,15 @@ if __name__ == '__main__':
     
     # device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     # print("Using {} device training.".format(device.type))
+    #tag: yang changed
+    torch.cuda.set_device(args.device if torch.cuda.is_available() else "cpu")
+    
 
     # train set
     # -- Note: Use validation set and disable the flipped to enable faster loading.
-    # cfg.TRAIN.USE_FLIPPED = True
-    # tag: yang changed
-    cfg.TRAIN.USE_FLIPPED = False
+    # tag: yang comment
+    # # cfg.TRAIN.USE_FLIPPED = True
+    
     cfg.USE_GPU_NMS = args.cuda
     imdb, roidb, ratio_list, ratio_index = combined_roidb(args.imdb_name)
     train_size = len(roidb)
@@ -63,7 +81,9 @@ if __name__ == '__main__':
     print('{:d} roidb entries'.format(len(roidb)))
     # print('{:d} roidb entries'.format(len(roidb)))
 
-    output_dir = os.path.join(args.save_dir, args.net, args.dataset, args.database)
+    # tag: yang changed
+    time_marker = time.strftime('%Y%m%d_%H%M', time.localtime())
+    output_dir = os.path.join(args.save_dir, args.dataset, args.database, args.net, time_marker)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
@@ -159,8 +179,10 @@ if __name__ == '__main__':
 
     if args.mGPUs:
         fasterRCNN = nn.DataParallel(fasterRCNN)
-    iters_per_epoch = int(10000 / args.batch_size)
-
+    # iters_per_epoch = int(10000 / args.batch_size)
+    # tag:yang.xu
+    iters_per_epoch = int(train_size / args.batch_size)
+    
     if args.ef:
         FL = EFocalLoss(class_num=2, gamma=args.gamma)
     else:
@@ -168,7 +190,8 @@ if __name__ == '__main__':
 
     if args.use_tfboard:
         from tensorboardX import SummaryWriter
-        log_dir = os.path.join(args.log_dir, args.net, args.dataset, args.database)
+        #tag: yang change dir
+        log_dir = os.path.join(args.log_dir, args.dataset, args.database, args.net, time_marker)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
         logger = SummaryWriter(log_dir)
@@ -220,7 +243,7 @@ if __name__ == '__main__':
             out_d_pixel = fasterRCNN(im_data, im_info, gt_boxes, num_boxes, target=True)
             # backward
             dloss_t_p = torch.mean((1 - out_d_pixel) ** 2) * 0.5
-            if args.dataset == 'WindTurbine':#sim10k
+            if 'wdt' in args.dataset:#sim10k
                 loss += (dloss_s_p + dloss_t_p) * args.eta  # + 0.5*(diff_t + diff_s)
             else:
                 loss += (dloss_s_p + dloss_t_p)
@@ -276,13 +299,13 @@ if __name__ == '__main__':
         #                              args.lc, args.gamma,
         #                              args.session, epoch,
         #                              step))
-        if epoch % 10 ==0 or epoch == args.max_epochs-1:
+        if epoch % 10 ==0:
             #'net_{}_target_{}_lr{}_bs{}_eta_{}_lc{}_gl{}_gamma_{}_session_{}_epoch_{}.pth'
             
             save_name = os.path.join(output_dir,
-                                    'target_{}_lr{}_bs{}_eta_{}_lc{}_gl{}_gamma_{}_session_{}_epoch_{}_flip{}.pth'.format(
+                                    'local_target_{}_lr{}_bs{}_eta_{}_lc{}_gamma_{}_session_{}_epoch_{}_flip{}.pth'.format(
                                         args.dataset_t, args.lr, args.batch_size, args.eta,
-                                        args.lc, args.gc, args.gamma,
+                                        args.lc, args.gamma,
                                         args.session, epoch, cfg.TRAIN.USE_FLIPPED))  
             save_checkpoint({
                 'session': args.session,

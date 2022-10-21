@@ -27,7 +27,17 @@ from lib.model.utils.net_utils import weights_normal_init, save_net, load_net, \
 
 from lib.model.utils.parser_func import parse_args, set_dataset_args
 
-
+def init_seeds(seed=0):
+    # tag: https://blog.csdn.net/hxxjxw/article/details/120160135
+    import random
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
 
 
 if __name__ == '__main__':
@@ -44,7 +54,9 @@ if __name__ == '__main__':
 
     print('Using config:')
     pprint.pprint(cfg)
-    np.random.seed(cfg.RNG_SEED)
+    # np.random.seed(cfg.RNG_SEED)
+    #tag:yang changed
+    init_seeds(cfg.RNG_SEED)
 
     # torch.backends.cudnn.benchmark = True
     if torch.cuda.is_available() and not args.cuda:
@@ -58,10 +70,16 @@ if __name__ == '__main__':
     # print('----CUDA--------', )
     # device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     # print("Using {} device training.".format(device.type))
+    #tag: yang changed
+    # RuntimeError: CUDA error: an illegal memory access was encountered
+    # https://github.com/pytorch/pytorch/issues/21819#issuecomment-553310128
+    torch.cuda.set_device(args.device if torch.cuda.is_available() else "cpu")
+    
 
     # train set
     # -- Note: Use validation set and disable the flipped to enable faster loading.
-    cfg.TRAIN.USE_FLIPPED = True
+    # tag: yang comment
+    # cfg.TRAIN.USE_FLIPPED = True
     cfg.USE_GPU_NMS = args.cuda
     # source dataset
     print('----args.imdb_name', args.imdb_name)
@@ -75,7 +93,7 @@ if __name__ == '__main__':
     print('{:d} target roidb entries'.format(len(roidb_t)))
 
     time_marker = time.strftime('%Y%m%d_%H%M', time.localtime())
-    output_dir = os.path.join(args.save_dir, args.net, args.dataset, args.database, time_marker)
+    output_dir = os.path.join(args.save_dir, args.dataset, args.database, args.net, time_marker)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
@@ -167,9 +185,9 @@ if __name__ == '__main__':
 
     if args.mGPUs:
         fasterRCNN = nn.DataParallel(fasterRCNN)
-    iters_per_epoch = int(10000 / args.batch_size)
+    # iters_per_epoch = int(10000 / args.batch_size)
     # tag:yang.xu
-    # iters_per_epoch = int(train_size / args.batch_size)
+    iters_per_epoch = int(train_size / args.batch_size)
     
     if args.ef:
         FL = EFocalLoss(class_num=2, gamma=args.gamma)
@@ -178,7 +196,8 @@ if __name__ == '__main__':
 
     if args.use_tfboard:
         from tensorboardX import SummaryWriter
-        log_dir = os.path.join(args.log_dir, args.net, args.dataset, args.database, time_marker)
+        #tag: yang changes
+        log_dir = os.path.join(args.log_dir, args.dataset, args.database, args.net, time_marker)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
         logger = SummaryWriter(log_dir)
@@ -241,12 +260,12 @@ if __name__ == '__main__':
             dloss_t = 0.5 * FL(out_d, domain_t)
             # local alignment loss
             dloss_t_p = 0.5 * torch.mean((1 - out_d_pixel) ** 2)
-            # if args.dataset == 'SYN_NWPU_C1':
-            #     loss += (dloss_s + dloss_t + dloss_s_p + dloss_t_p) * args.eta
-            # else:
-            #     loss += (dloss_s + dloss_t + dloss_s_p + dloss_t_p)
+            if 'wdt' in args.dataset:
+                loss += (dloss_s + dloss_t + dloss_s_p + dloss_t_p) * args.eta
+            else:
+                loss += (dloss_s + dloss_t + dloss_s_p + dloss_t_p)
             # tag: fixme
-            loss += (dloss_s + dloss_t + dloss_s_p + dloss_t_p)
+            # loss += (dloss_s + dloss_t + dloss_s_p + dloss_t_p)
 
             optimizer.zero_grad()
             loss.backward()
@@ -304,11 +323,11 @@ if __name__ == '__main__':
         #                              args.session, epoch,
         #                              step))
         # tag: yang changed
-        if epoch % 10 ==0 or epoch == args.max_epochs-1:
+        if epoch % 10 ==0:
             #'net_{}_target_{}_lr{}_bs{}_eta_{}_lc{}_gl{}_gamma_{}_session_{}_epoch_{}.pth'
             
             save_name = os.path.join(output_dir,
-                                    'target_{}_lr{}_bs{}_eta_{}_lc{}_gl{}_gamma_{}_session_{}_epoch_{}_flip{}.pth'.format(
+                                    'target_{}_lr{}_bs{}_eta_{}_lc{}_gc{}_gamma_{}_session_{}_epoch_{}_flip{}.pth'.format(
                                         args.dataset_t, args.lr, args.batch_size, args.eta,
                                         args.lc, args.gc, args.gamma,
                                         args.session, epoch, cfg.TRAIN.USE_FLIPPED))                             

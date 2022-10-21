@@ -27,6 +27,18 @@ from model.utils.net_utils import weights_normal_init, save_net, load_net, \
 
 from model.utils.parser_func import parse_args, set_dataset_args
 
+def init_seeds(seed=0):
+    # tag: https://blog.csdn.net/hxxjxw/article/details/120160135
+    import random
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+
 if __name__ == '__main__':
 
     args = parse_args()
@@ -41,15 +53,22 @@ if __name__ == '__main__':
 
     print('Using config:')
     pprint.pprint(cfg)
-    np.random.seed(cfg.RNG_SEED)
+    # np.random.seed(cfg.RNG_SEED)
+    init_seeds(cfg.RNG_SEED)
 
     # torch.backends.cudnn.benchmark = True
     if torch.cuda.is_available() and not args.cuda:
         print("WARNING: You have a CUDA device, so you should probably run with --cuda")
+    # device = torch.device(args.device if torch.cuda.is_available() else "cpu")
+    # print("Using {} device training.".format(device.type))
+    #tag: yang changed
+    torch.cuda.set_device(args.device if torch.cuda.is_available() else "cpu")
+    
 
     # train set
     # -- Note: Use validation set and disable the flipped to enable faster loading.
-    cfg.TRAIN.USE_FLIPPED = True
+    #tag: yang comments
+    # cfg.TRAIN.USE_FLIPPED = True
     cfg.USE_GPU_NMS = args.cuda
     imdb, roidb, ratio_list, ratio_index = combined_roidb(args.imdb_name)
     train_size = len(roidb)
@@ -59,7 +78,9 @@ if __name__ == '__main__':
     print('{:d} target roidb entries'.format(len(roidb_t)))
     # print('{:d} roidb entries'.format(len(roidb)))
 
-    output_dir = args.save_dir + "/" + args.net + "/" + args.dataset
+    #tag: yang changed dir
+    time_marker = time.strftime('%Y%m%d_%H%M', time.localtime())
+    output_dir = os.path.join(args.save_dir, args.dataset, args.database, args.net, time_marker)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -157,8 +178,11 @@ if __name__ == '__main__':
 
     if args.use_tfboard:
         from tensorboardX import SummaryWriter
-
-        logger = SummaryWriter("logs")
+        # tag: yang change dir
+        log_dir = os.path.join(args.log_dir, args.dataset, args.database, args.net, time_marker)
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+        logger = SummaryWriter(log_dir)
     count_iter = 0
     for epoch in range(args.start_epoch, args.max_epochs + 1):
         # setting to train mode
@@ -207,7 +231,7 @@ if __name__ == '__main__':
             out_d = fasterRCNN(im_data, im_info, gt_boxes, num_boxes, target=True, eta=eta)
             domain_t = Variable(torch.ones(out_d.size(0)).long().cuda())
             dloss_t = 0.5 * FL(out_d, domain_t)
-            if args.dataset == 'sim10k':
+            if 'wdt' in args.dataset:
                 loss += (dloss_s + dloss_t) * args.eta
             else:
                 loss += (dloss_s + dloss_t)
@@ -256,24 +280,25 @@ if __name__ == '__main__':
                                        (epoch - 1) * iters_per_epoch + step)
                 loss_temp = 0
                 start = time.time()
-        save_name = os.path.join(output_dir,
-                                 'global_target_{}_eta_{}_efocal_{}_global_context_{}_gamma_{}_session_{}_epoch_{}_step_{}.pth'.format(
-                                     args.dataset_t,
-                                     args.eta, args.ef,
-                                     args.gc,
-                                     args.gamma,
-                                     args.session,
-                                     epoch,
-                                     step))
-        save_checkpoint({
-            'session': args.session,
-            'epoch': epoch + 1,
-            'model': fasterRCNN.module.state_dict() if args.mGPUs else fasterRCNN.state_dict(),
-            'optimizer': optimizer.state_dict(),
-            'pooling_mode': cfg.POOLING_MODE,
-            'class_agnostic': args.class_agnostic,
-        }, save_name)
-        print('save model: {}'.format(save_name))
+        if epoch % 10 ==0:
+            save_name = os.path.join(output_dir,
+                                    'global_target_{}_eta_{}_efocal_{}_gc_{}_gamma_{}_session_{}_epoch_{}_flip{}.pth'.format(
+                                        args.dataset_t,
+                                        args.eta, args.ef,
+                                        args.gc,
+                                        args.gamma,
+                                        args.session,
+                                        epoch,
+                                        cfg.TRAIN.USE_FLIPPED))
+            save_checkpoint({
+                'session': args.session,
+                'epoch': epoch + 1,
+                'model': fasterRCNN.module.state_dict() if args.mGPUs else fasterRCNN.state_dict(),
+                'optimizer': optimizer.state_dict(),
+                'pooling_mode': cfg.POOLING_MODE,
+                'class_agnostic': args.class_agnostic,
+            }, save_name)
+            print('save model: {}'.format(save_name))
 
     if args.use_tfboard:
         logger.close()
