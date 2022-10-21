@@ -232,7 +232,7 @@ def resnet50(pretrained=False):
   """
   model = ResNet(Bottleneck, [3, 4, 6, 3])
   if pretrained:
-    model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
+    model.load_state_dict(model_zoo.load_url(model_urls['resnet50'], model_dir=cfg.RESNET_PATH))
   return model
 
 
@@ -243,7 +243,7 @@ def resnet101(pretrained=False):
   """
   model = ResNet(Bottleneck, [3, 4, 23, 3])
   if pretrained:
-    model.load_state_dict(model_zoo.load_url(model_urls['resnet101']))
+    model.load_state_dict(model_zoo.load_url(model_urls['resnet101'], model_dir=cfg.RESNET_PATH))
   return model
 
 
@@ -254,7 +254,7 @@ def resnet152(pretrained=False):
   """
   model = ResNet(Bottleneck, [3, 8, 36, 3])
   if pretrained:
-    model.load_state_dict(model_zoo.load_url(model_urls['resnet152']))
+    model.load_state_dict(model_zoo.load_url(model_urls['resnet152'], model_dir=cfg.RESNET_PATH))
   return model
 
 class resnet(_fasterRCNN):
@@ -271,13 +271,14 @@ class resnet(_fasterRCNN):
 
   def _init_modules(self):
 
-    resnet = resnet101()
+    resnet = resnet101(pretrained=self.pretrained)
     if self.layers == 50:
-      resnet = resnet50()
-    if self.pretrained == True:
-      print("Loading pretrained weights from %s" %(self.model_path))
-      state_dict = torch.load(self.model_path)
-      resnet.load_state_dict({k:v for k,v in state_dict.items() if k in resnet.state_dict()})
+      resnet = resnet50(pretrained=self.pretrained)
+    # tag: yang comment
+    # if self.pretrained == True:
+    #   print("Loading pretrained weights from %s" %(self.model_path))
+    #   state_dict = torch.load(self.model_path)
+    #   resnet.load_state_dict({k:v for k,v in state_dict.items() if k in resnet.state_dict()})
 
     # Build resnet.
     self.RCNN_base = nn.Sequential(resnet.conv1, resnet.bn1,resnet.relu,

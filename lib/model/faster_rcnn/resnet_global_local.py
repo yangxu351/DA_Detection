@@ -265,7 +265,7 @@ def resnet18(pretrained=False):
   """
   model = ResNet(BasicBlock, [2, 2, 2, 2])
   if pretrained:
-    model.load_state_dict(model_zoo.load_url(model_urls['resnet18']), model_dir=cfg.RESNET_PATH)
+    model.load_state_dict(model_zoo.load_url(model_urls['resnet18'], model_dir=cfg.RESNET_PATH))
   return model
 
 
@@ -276,18 +276,19 @@ def resnet34(pretrained=False):
   """
   model = ResNet(BasicBlock, [3, 4, 6, 3])
   if pretrained:
-    model.load_state_dict(model_zoo.load_url(model_urls['resnet34']), model_dir=cfg.RESNET_PATH)
+    model.load_state_dict(model_zoo.load_url(model_urls['resnet34'], model_dir=cfg.RESNET_PATH))
   return model
 
 
-def resnet50(pretrained=False):
-  """Constructs a ResNet-50 model.
+def resnet50(pretrained=False): 
+  """Constructs a ResNet-50 model. 
   Args:
     pretrained (bool): If True, returns a model pre-trained on ImageNet
+    , device='cuda:0'
   """
   model = ResNet(Bottleneck, [3, 4, 6, 3])
   if pretrained:
-    model.load_state_dict(model_zoo.load_url(model_urls['resnet50']), model_dir=cfg.RESNET_PATH)
+    model.load_state_dict(model_zoo.load_url(model_urls['resnet50'], model_dir=cfg.RESNET_PATH)) #, map_location=device
   return model
 
 
@@ -298,7 +299,7 @@ def resnet101(pretrained=False):
   """
   model = ResNet(Bottleneck, [3, 4, 23, 3])
   if pretrained:
-    model.load_state_dict(model_zoo.load_url(model_urls['resnet101']), model_dir=cfg.RESNET_PATH)
+    model.load_state_dict(model_zoo.load_url(model_urls['resnet101'], model_dir=cfg.RESNET_PATH))
   return model
 
 
@@ -309,7 +310,7 @@ def resnet152(pretrained=False):
   """
   model = ResNet(Bottleneck, [3, 8, 36, 3])
   if pretrained:
-    model.load_state_dict(model_zoo.load_url(model_urls['resnet152']))
+    model.load_state_dict(model_zoo.load_url(model_urls['resnet152'], model_dir=cfg.RESNET_PATH))
   return model
 
 class resnet(_fasterRCNN):
@@ -321,20 +322,19 @@ class resnet(_fasterRCNN):
     self.lc = lc
     self.gc = gc
     self.layers = num_layers
-    if self.layers == 50:
-      self.model_path = '/data/users/yang/code/DA_Detection/pretrained_models/resnet50.pth'
-    _fasterRCNN.__init__(self, classes, class_agnostic,lc,gc)
+    # self.device = device
+    _fasterRCNN.__init__(self, classes, class_agnostic, lc, gc)
 
   def _init_modules(self):
 
-    resnet = resnet101()
+    resnet = resnet101(pretrained=self.pretrained) # , device=self.device
     if self.layers == 50:
-      resnet = resnet50()
-    if self.pretrained == True:
-      print("Loading pretrained weights from %s" %(self.model_path))
-      state_dict = torch.load(self.model_path)
-      # state_dict = model_zoo.load_url(model_urls[f'resnet{self.layers}'])
-      resnet.load_state_dict({k:v for k,v in state_dict.items() if k in resnet.state_dict()})
+      resnet = resnet50(pretrained=self.pretrained) #, device=self.device
+    # if self.pretrained == True:
+    #   print("Loading pretrained weights from %s" %(self.model_path))
+    #   state_dict = torch.load(self.model_path)
+    #   # state_dict = model_zoo.load_url(model_urls[f'resnet{self.layers}'])
+    #   resnet.load_state_dict({k:v for k,v in state_dict.items() if k in resnet.state_dict()})
     # Build resnet.
     self.RCNN_base1 = nn.Sequential(resnet.conv1, resnet.bn1,resnet.relu,
       resnet.maxpool,resnet.layer1)
