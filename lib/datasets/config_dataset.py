@@ -48,7 +48,7 @@ __D.DATABASE = 'syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40'
 
 __D.DATA_DIR_T = 'wind_turbine'
 __D.DATABASE_T = 'xilin_wdt'
-__D.DATASET_TEST = 'xilin_wdt'
+__D.DATABASE_TEST = 'xilin_wdt'
 
 __D.DATA_CAT = 'WindTurbine'
 
