@@ -217,7 +217,7 @@ def voc_eval(detpath,
              classname,
              cachedir,
              ovthresh=0.5,
-             use_07_metric=False):
+             use_07_metric=False, aug=False):
     """rec, prec, ap = voc_eval(detpath,
                                 lblsetfile, # annopath,
                                 imagesetfile,
@@ -238,6 +238,7 @@ def voc_eval(detpath,
     [ovthresh]: Overlap threshold (default = 0.5)
     [use_07_metric]: Whether to use VOC07's 11 point AP computation
         (default False)
+    aug: if the validation set is augmented? default=False
     """
     # assumes detections are in detpath.format(classname)
     # assumes annotations are in annopath.format(imagename)
@@ -248,11 +249,12 @@ def voc_eval(detpath,
     if not os.path.isdir(cachedir):
         os.mkdir(cachedir)
     cachefile = os.path.join(cachedir, '%s_annots.pkl' % classname)
+    print('cachefile', cachefile)
     # read list of images
     imagenames = [os.path.basename(f).split('.')[0] for f in img_file_arr]
-
-    if not os.path.isfile(cachefile):
-        # load annotations
+    # print('len image names', len(imagenames))
+    if not os.path.isfile(cachefile) or aug:
+        # genearte annotations
         recs = {}
         for i, imagename in enumerate(imagenames):
             recs[imagename] = parse_rec(lbl_file_arr[i])
