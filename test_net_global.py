@@ -79,9 +79,9 @@ if __name__ == '__main__':
 
   if args.net == 'vgg16':
     fasterRCNN = vgg16(imdb.classes, pretrained=True, class_agnostic=args.class_agnostic,gc=args.gc)
-  elif args.net == 'res50':
-    fasterRCNN = resnet(imdb.classes, 101, pretrained=True, class_agnostic=args.class_agnostic,gc=args.gc)
   elif args.net == 'res101':
+    fasterRCNN = resnet(imdb.classes, 101, pretrained=True, class_agnostic=args.class_agnostic,gc=args.gc)
+  elif args.net == 'res50':
     fasterRCNN = resnet(imdb.classes, 50, pretrained=True, class_agnostic=args.class_agnostic,gc=args.gc)
   else:
     print("network is not defined")
@@ -90,7 +90,7 @@ if __name__ == '__main__':
   fasterRCNN.create_architecture()
 
   print("load checkpoint %s" % (args.load_name))
-  weight_dir =f'models//{args.dataset}/{args.database}{args.net}/{args.load_name}'
+  weight_dir =f'models/{args.dataset}/{args.database}/{args.net}/{args.load_name}'
   checkpoint = torch.load(weight_dir)
   fasterRCNN.load_state_dict(checkpoint['model'])
   if 'pooling_mode' in checkpoint.keys():
