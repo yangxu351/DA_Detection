@@ -47,7 +47,7 @@ IMG_SUFFIX = '.jpg'
 
 
 class real_wdt(imdb):
-    def __init__(self, image_set='xilin_wdt_test', devkit_path=None):
+    def __init__(self, image_set='xilin_wdt_val', aug=False):
         imdb.__init__(self, image_set)
         
         self._class_set = cfg_d.DATA_CAT
@@ -55,11 +55,12 @@ class real_wdt(imdb):
         
         self._year = '2022'
         cix = image_set.rfind('_')
-        self._image_set = image_set[cix+1:].lower() # test
+        self._image_set = image_set[cix+1:].lower() # val
         self._devkit_path = os.path.join(cfg_d.DEV_DATA_DIR, database) #self._get_default_path() if devkit_path is None \
             #else devkit_path
         self._data_path = os.path.join(cfg_d.BASE_DATA_DIR, cfg_d.DATA_DIR_T, database)
 
+        self.aug = aug
         print('data path', self._data_path)
         self._classes = ['BG', 'WindTurbine']#,  # __background__ always index 0
                         #  'NWPU_C1') #, # one pair of engines mounted at tail 
@@ -95,7 +96,11 @@ class real_wdt(imdb):
         return path of images(.png), annos(.xml)
                 class_set='real_nwpu_c1'
         """
-        data = parse_data_cfg(os.path.join(self._devkit_path, 'path.data'))
+        if self.aug:
+            path_name = 'path_aug.data'
+        else:
+            path_name = 'path.data'
+        data = parse_data_cfg(os.path.join(self._devkit_path, path_name))
         return data[key]
 
 
@@ -127,15 +132,21 @@ class real_wdt(imdb):
         return image_path
     
     def get_img_set_file(self):
-        img_set_file = os.path.join(self._devkit_path,  
-                                    f'{self._image_set}_img_seed{cfg_d.REAL_DATA_SEED}.txt')
+        if self.aug:
+            file_name = f'{self._image_set}_img_aug_seed{cfg_d.REAL_DATA_SEED}.txt'
+        else:
+            file_name = f'{self._image_set}_img_seed{cfg_d.REAL_DATA_SEED}.txt'
+        img_set_file = os.path.join(self._devkit_path, file_name)
         assert os.path.exists(img_set_file), \
             'File does not exist: {}'.format(img_set_file)
         return img_set_file
 
     def get_lbl_set_file(self):
-        lbl_set_file = os.path.join(self._devkit_path,  
-                                    f'{self._image_set}_lbl_seed{cfg_d.REAL_DATA_SEED}.txt')
+        if self.aug:
+            file_name = f'{self._image_set}_lbl_aug_seed{cfg_d.REAL_DATA_SEED}.txt'
+        else:
+            file_name = f'{self._image_set}_lbl_seed{cfg_d.REAL_DATA_SEED}.txt'
+        lbl_set_file = os.path.join(self._devkit_path, file_name)
         assert os.path.exists(lbl_set_file), \
             'File does not exist: {}'.format(lbl_set_file)
         return lbl_set_file
@@ -276,6 +287,7 @@ class real_wdt(imdb):
         format. Exclude bounding boxes which are not included in self._classes.
         """
         lbl_file = os.path.join(self._lbl_dir, f'{index}.xml')
+        print('lbl file', lbl_file)
         tree = ET.parse(lbl_file)
         objs = tree.findall('object')
 
@@ -387,10 +399,12 @@ class real_wdt(imdb):
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
         for i, cls in enumerate(self._classes):
+            if cls == 'BG':
+                continue
             filename = self._get_voc_results_file_template().format(cls)
             rec, prec, ap = voc_eval(
                 filename, self._label_arr, self._image_arr, cls, cachedir, ovthresh=0.5,
-                use_07_metric=use_07_metric)
+                use_07_metric=use_07_metric, aug = self.aug)
             aps += [ap]
             print('AP for {} = {:.4f}'.format(cls, ap))
             with open(os.path.join(output_dir, cls + '_pr.pkl'), 'wb') as f:
@@ -449,7 +463,8 @@ class real_wdt(imdb):
 if __name__ == '__main__':
     
     # d = real_wdt('xilin_wdt_train')
-    d = real_wdt('xilin_wdt_val')
+    # d = real_wdt('xilin_wdt_val')
+    d = real_wdt('xilin_wdt_aug_val', aug=True)
     
     res = d.roidb
     print('len res', len(res))
