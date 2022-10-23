@@ -382,6 +382,8 @@ class syn_wdt(imdb):
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
         for i, cls in enumerate(self._classes):
+            if cls == 'BG':
+                continue
             filename = self._get_voc_results_file_template().format(cls)
             rec, prec, ap = voc_eval(
                 filename, self._label_arr, self._image_arr, cls, cachedir, ovthresh=0.5,
