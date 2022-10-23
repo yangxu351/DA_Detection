@@ -88,9 +88,14 @@ for split in ['train','val']:
   __sets[dataset] = (lambda name=dataset: syn_wdt(name))
   # print('__sets',[x for x in __sets.values()])
 
-for split in ['train', 'val']:
+for split in ['train', 'val', 'aug_val']:
   dataset = 'xilin_wdt_{}'.format(split)
-  __sets[dataset] = (lambda name=dataset: real_wdt(name))  
+  # tag: for val aug
+  if 'aug' in split:
+    aug = True
+  else: 
+    aug = False
+  __sets[dataset] = (lambda name=dataset: real_wdt(name, aug))  
 
 def get_imdb(name):
   """Get an imdb (image database) by name."""
