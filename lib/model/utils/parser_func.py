@@ -12,8 +12,8 @@ def parse_args():
     parser.add_argument('--dataset', dest='dataset',
                         help='source training dataset: SYN_NWPU_C1, synthetic_data_wdt',
                         default=cfg_d.DATA_DIR_S, type=str)
-    parser.add_argument('--dataset_test', dest='dataset_test',
-                        help='test dataset: xilin_wdt_val',
+    parser.add_argument('--dataset_dir_t', dest='dataset_dir_t',
+                        help='target data dir: wind_turebine',
                         default=cfg_d.DATA_DIR_T, type=str)
 
     parser.add_argument('--database', dest='database',
@@ -23,6 +23,10 @@ def parse_args():
     parser.add_argument('--dataset_t', dest='dataset_t',
                         help='target training dataset:REAL_NWPU_C1, xilin_wdt',
                         default=cfg_d.DATABASE_T, type=str)
+    # tag: for test dataset                            
+    parser.add_argument('--database_test', dest='database_test',
+                        help='test dataset:REAL_NWPU_C1, xilin_wdt',
+                        default=cfg_d.DATABASE_TEST, type=str)                        
     ###########################################################=========end data set
 
     parser.add_argument('--net', dest='net',
@@ -55,7 +59,7 @@ def parse_args():
                         default="images")  #??????????                     
     ###########################################################=========end dir
     parser.add_argument('--load_name', dest='load_name',
-                        help='time/net_res50_target_xilin_wdt_lr0.0001_eta_0.1_lcTrue_glTrue_gamma_5_session_1_epoch_50.pth', default="",
+                        help='time/net_res50_target_xilin_wdt_lr0.0001_eta_0.1_lcTrue_glTrue_gamma_5_session_1_epoch_50.pth', default="20221021_0606/global_target_xilin_wdt_eta_0.1_efocal_False_gc_True_gamma_5_session_1_epoch_30_flipFalse.pth",
                         type=str)
     parser.add_argument('--nw', dest='num_workers',
                         help='number of worker to load data',
@@ -68,7 +72,7 @@ def parse_args():
     #                     help=' CUDA device', default='cuda:1',
     #                     type=str)
     parser.add_argument('--device', dest='device', 
-                        help=' CUDA device', default=1,
+                        help=' CUDA device', default=3,
                         type=int)
 
     parser.add_argument('--detach', dest='detach',
@@ -83,6 +87,11 @@ def parse_args():
     parser.add_argument('--gc', dest='gc', 
                         help='whether use context vector for global level',
                         action='store_true')
+    # tag:for val aug dataset
+    parser.add_argument('--aug', dest='aug', default=True,
+                        help='whether use aug val',
+                        action='store_true')
+
     parser.add_argument('--ls', dest='large_scale',
                         help='whether use large imag scale',
                         action='store_true')
@@ -262,9 +271,12 @@ def set_dataset_args(args, test=False):
             args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES',
                              '30']
         # tag: yang adds                             
-        elif args.dataset_test == "xilin_wdt":
-            args.imdb_name =  args.dataset_test + "_val"
-            args.imdbval_name = args.dataset_test + "_val"
+        elif args.database_test == "xilin_wdt":
+            args.imdb_name =  args.database_test + "_val"
+            if args.aug:
+                args.imdbval_name = args.database_test + "_aug_val"
+            else:
+                args.imdbval_name = args.database_test + "_val"
             args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES',
                              '30']
         elif args.dataset == "cityscape":
