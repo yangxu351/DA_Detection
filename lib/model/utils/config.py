@@ -162,6 +162,39 @@ __C.TRAIN.USE_ALL_GT = True
 # Whether to tune the batch normalization parameters during training
 __C.TRAIN.BN_TRAIN = False
 
+
+# tag: yang added
+# ---------------------------------------------------------------------------- #
+# Solver
+# ---------------------------------------------------------------------------- #
+__C.SOLVER = edict()
+__C.SOLVER.MAX_ITER = 30
+
+__C.SOLVER.BASE_LR = 0.001
+__C.SOLVER.BIAS_LR_FACTOR = 2
+
+__C.SOLVER.MOMENTUM = 0.9
+
+__C.SOLVER.WEIGHT_DECAY = 0.0005
+__C.SOLVER.WEIGHT_DECAY_BIAS = 0
+
+__C.SOLVER.GAMMA = 0.1
+
+__C.SOLVER.STEPS = [20, 26]
+
+__C.SOLVER.WARMUP_FACTOR = 1.0 / 3
+# tag: yang changed
+__C.SOLVER.WARMUP_ITERS = 5
+__C.SOLVER.WARMUP_METHOD = "linear"
+
+
+# Number of images per batch
+# This is global, so if we have 8 GPUs and IMS_PER_BATCH = 16, each GPU will
+# see 2 images per batch
+# __C.SOLVER.IMS_PER_BATCH = 16
+# tag: 
+__C.SOLVER.IMS_PER_BATCH = 1
+
 #
 # Testing options
 #
@@ -375,6 +408,7 @@ def cfg_from_file(filename):
   """Load a config file and merge it into the default options."""
   import yaml
   with open(filename, 'r') as f:
+    # print('yaml file----------', f.name())
     yaml_cfg = edict(yaml.load(f))
 
   _merge_a_into_b(yaml_cfg, __C)
