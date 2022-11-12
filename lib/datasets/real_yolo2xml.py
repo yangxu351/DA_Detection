@@ -177,9 +177,13 @@ def split_real_data_train_val(data_seed = 0, data_cat='WindTurbine', aug=False):
     files = glob.glob(os.path.join(args.real_voc_annos_dir, '*.xml'))
     files_name = sorted([os.path.basename(f).split(".")[0] for f in files])
     files_num = len(files_name)
-    
+    #tag: for validation
+    # for f in files:
+    #     file_name = os.path.basename(f)
+    #     print(file_name)
     random.seed(data_seed)
     val_index = random.sample(range(0, files_num), k=int(files_num*args.val_percent))
+    # print('val_index', val_index)
     train_img_files = []
     val_img_files = []
     train_lbl_files = []
@@ -192,7 +196,10 @@ def split_real_data_train_val(data_seed = 0, data_cat='WindTurbine', aug=False):
         else:
             train_lbl_files.append(f)
             train_img_files.append(os.path.join(args.real_img_dir, img_name))
-    print('len val files', len(val_lbl_files))
+    # tag: for validation
+    # print('len val files', len(val_lbl_files))
+    print('val_file_names', [os.path.basename(f).split('.')[0] for f in val_lbl_files])
+
     try:
         if not os.path.exists(args.workdir_data_txt):
             os.makedirs(args.workdir_data_txt)
