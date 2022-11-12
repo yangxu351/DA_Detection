@@ -59,7 +59,7 @@ def parse_args():
                         default="images")  #??????????                     
     ###########################################################=========end dir
     parser.add_argument('--load_name', dest='load_name',
-                        help='time/net_res50_target_xilin_wdt_lr0.0001_eta_0.1_lcTrue_glTrue_gamma_5_session_1_epoch_50.pth', default="20221021_0606/global_target_xilin_wdt_eta_0.1_efocal_False_gc_True_gamma_5_session_1_epoch_30_flipFalse.pth",
+                        help='time/net_res50_target_xilin_wdt_lr0.0001_eta_0.1_lcTrue_glTrue_gamma_5_session_1_epoch_50.pth', default="",
                         type=str)
     parser.add_argument('--nw', dest='num_workers',
                         help='number of worker to load data',
@@ -203,7 +203,6 @@ def set_dataset_args(args, test=False):
         elif args.dataset == "synthetic_data_wdt":
             args.imdb_name = args.dataset + "_train"
             args.imdbval_name =args.dataset + "_val"
-            # args.imdb_name_cycle = "sim10k_cycle_train"  # "voc_cyclewater_2007_trainval+voc_cyclewater_2012_trainval"
             args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '30']
         
         ## cityscape dataset for only car classes.
@@ -247,15 +246,13 @@ def set_dataset_args(args, test=False):
         elif args.dataset_t == "REAL_NWPU_C1":
             args.imdb_name_target = args.dataset_t + "_TEST"
             args.imdbval_name_target = args.dataset_t + "_TEST"
-            args.set_cfgs_target = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES',
-                                    '20']  
+            args.set_cfgs_target = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '20']  
         # tag: for wdt
         #fixme:???? whether set imdb and imdbval the same??????
         elif args.dataset_t == "xilin_wdt":
             args.imdb_name_target = args.dataset_t + "_train"
             args.imdbval_name_target = args.dataset_t + "_val"
-            args.set_cfgs_target = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES',
-                                    '20']                                                        
+            args.set_cfgs_target = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES', '20']                                                        
     else:
         if args.dataset == "pascal_voc":
             args.imdb_name = "voc_2007_trainval"
