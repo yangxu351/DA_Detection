@@ -13,8 +13,8 @@ __C = edict()
 #   from fast_rcnn_config import cfg
 cfg = __C
 
-#tag:yang.xu
-__C.RESNET_PATH = '/data/users/yang/code/DA_Detection/pretrained_models'
+#tag:yang.xu?????????????????
+__C.RESNET_PATH = '/data/users/yang/code/SWDA_Detection/pretrained_models'
 #
 # Training options
 #
