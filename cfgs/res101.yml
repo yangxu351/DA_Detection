@@ -17,3 +17,4 @@ TEST:
 POOLING_SIZE: 7
 POOLING_MODE: align
 CROP_RESIZE_WITH_MAX_POOL: False
+RESNET_PATH: '/data/users/yang/code/SWDA_Detection/pretrained_models'
