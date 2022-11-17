@@ -93,7 +93,12 @@ if __name__ == '__main__':
     print('{:d} target roidb entries'.format(len(roidb_t)))
 
     time_marker = time.strftime('%Y%m%d_%H%M', time.localtime())
-    output_dir = os.path.join(args.save_dir, args.dataset, args.database, args.net, time_marker)
+    # tag: yang changed
+    if args.data_seed == 17:
+        folder_name = time_marker
+    else:
+        folder_name= time_marker + f'_data_seed{args.data_seed}'
+    output_dir = os.path.join(args.save_dir, args.dataset, args.database, args.net, folder_name)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
@@ -197,7 +202,11 @@ if __name__ == '__main__':
     if args.use_tfboard:
         from tensorboardX import SummaryWriter
         #tag: yang changes
-        log_dir = os.path.join(args.log_dir, args.dataset, args.database, args.net, time_marker)
+        if args.data_seed == 17:
+            folder_name = time_marker
+        else:
+            folder_name= time_marker + f'_data_seed{args.data_seed}'
+        log_dir = os.path.join(args.log_dir, args.dataset, args.database, args.net, folder_name)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
         logger = SummaryWriter(log_dir)
