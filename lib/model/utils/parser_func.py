@@ -11,28 +11,28 @@ def parse_args():
     ###########################################################=========data set
     parser.add_argument('--dataset', dest='dataset',
                         help='source training dataset: SYN_NWPU_C1, synthetic_data_wdt',
-                        default=cfg_d.DATA_DIR_S, type=str)
+                        default='synthetic_data_wdt', type=str)
     parser.add_argument('--dataset_dir_t', dest='dataset_dir_t',
                         help='target data dir: wind_turebine',
-                        default=cfg_d.DATA_DIR_T, type=str)
+                        default='wind_turebine', type=str)
 
     parser.add_argument('--database', dest='database',
                         help='source training database: syn_nwpu_bkg_shdw_rndsolar_sizefactor1_multimodels_negtrn_fixsigma_C1_v6',
-                        default=cfg_d.DATABASE, type=str)      
+                        default='syn_wdt_rnd_sky_rnd_solar_rnd_cam_p3_shdw_step40', type=str)      
 
     parser.add_argument('--dataset_t', dest='dataset_t',
                         help='target training dataset:REAL_NWPU_C1, xilin_wdt',
-                        default=cfg_d.DATABASE_T, type=str)
+                        default='xilin_wdt', type=str)
     # tag: for test dataset                            
     parser.add_argument('--database_test', dest='database_test',
                         help='test dataset:REAL_NWPU_C1, xilin_wdt',
-                        default=cfg_d.DATABASE_TEST, type=str)                        
+                        default='xilin_wdt', type=str)                        
     ###########################################################=========end data set
     # synthetic dataseed
     #tag: yang adds
     parser.add_argument('--data_seed', dest='data_seed',
                         help='synthetic dataseed',
-                        default=cfg_d.DATA_SEED, type=int)
+                        default=17, type=int)
 
     parser.add_argument('--net', dest='net',
                         help='vgg16, res101 res50',
@@ -309,5 +309,6 @@ def set_dataset_args(args, test=False):
             args.set_cfgs = ['ANCHOR_SCALES', '[8, 16, 32]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'MAX_NUM_GT_BOXES',
                                     '20']
     args.cfg_file = "cfgs/{}_ls.yml".format(args.net) if args.large_scale else "cfgs/{}.yml".format(args.net)
-
+    # tag: yang adds cfg data file
+    args.cfg_data_file = 'cfgs/wdt_dataset.yml'
     return args
