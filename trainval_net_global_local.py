@@ -27,6 +27,9 @@ from lib.model.utils.net_utils import weights_normal_init, save_net, load_net, \
 
 from lib.model.utils.parser_func import parse_args, set_dataset_args
 
+# tag: yang adds for cfg data file
+from lib.datasets.config_dataset import cfg_data_from_file 
+
 def init_seeds(seed=0):
     # tag: https://blog.csdn.net/hxxjxw/article/details/120160135
     import random
@@ -51,6 +54,9 @@ if __name__ == '__main__':
         cfg_from_file(args.cfg_file)
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
+    #tag: yang adds cfg data file
+    if args.cfg_data_file is not None:
+        cfg_data_from_file(args.cfg_data_file)
 
     print('Using config:')
     pprint.pprint(cfg)
