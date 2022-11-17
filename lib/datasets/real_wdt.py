@@ -33,7 +33,11 @@ from lib.datasets.voc_eval import voc_eval
 # TODO: make fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
 from model.utils.config import cfg
-from lib.datasets.config_dataset import cfg_d
+
+#tag:yang adds cfg_data_from_file
+from lib.datasets.config_dataset import cfg_d, cfg_data_from_file
+cfg_data_from_file('cfgs/wdt_dataset.yml')
+
 from lib.datasets.syn_pixel2xml import parse_data_cfg
 
 try:

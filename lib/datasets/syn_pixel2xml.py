@@ -300,7 +300,9 @@ if __name__ == '__main__':
     dilate = True
     data_cat = 'WindTurbine'
     # group_syn_object_annotation_to_form_xml(database, syn_args, data_cat) #valid annos 13500 cnt 12087
-    from lib.datasets.config_dataset import cfg_d
+    #tag:yang adds cfg_data_from_file
+    from lib.datasets.config_dataset import cfg_d, cfg_data_from_file
+    cfg_data_from_file('cfgs/wdt_dataset.yml')
     seed = cfg_d.DATA_SEED
     split_syn_data_trn_val(seed, database, data_folder, data_cat)
 
