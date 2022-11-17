@@ -97,9 +97,9 @@ class real_wdt(imdb):
                 class_set='real_nwpu_c1'
         """
         if self.aug:
-            path_name = 'path_aug.data'
+            path_name = f'path_seed{cfg_d.REAL_DATA_SEED}_aug.data'
         else:
-            path_name = 'path.data'
+            path_name = f'path_seed{cfg_d.REAL_DATA_SEED}.data'
         data = parse_data_cfg(os.path.join(self._devkit_path, path_name))
         return data[key]
 

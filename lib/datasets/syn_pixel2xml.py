@@ -15,7 +15,7 @@ import pandas as pd
 import shutil
 from PIL import Image
 
-from datasets.object_score_util import get_bbox_coords_from_annos_with_object_score as gbc
+from lib.datasets.object_score_util import get_bbox_coords_from_annos_with_object_score as gbc
 
 IMG_FORMAT = '.png'
 
@@ -194,14 +194,14 @@ def split_syn_data_trn_val(seed=17, database='syn_nwpu_bkg_px23whr3_*', data_fol
     val_img_txt.close()
     val_lbl_txt.close()
 
-    data_txt = open(os.path.join(data_dir, 'data_list.data'), 'w')
+    data_txt = open(os.path.join(data_dir, f'data_list_seed{seed}.data'), 'w')
     data_txt.write(f'trn_img_file={trn_img_file}\n')
     data_txt.write(f'trn_lbl_file={trn_lbl_file}\n')
     data_txt.write(f'val_img_file={val_img_file}\n')
     data_txt.write(f'val_lbl_file={val_lbl_file}\n')
     data_txt.write(f'class_cat={data_cat}')
     data_txt.close()
-    path_txt = open(os.path.join(data_dir, 'path.data'), 'w')
+    path_txt = open(os.path.join(data_dir, f'path_seed{seed}.data'), 'w')
     path_txt.write(f'img_dir={img_dir}\n')
     path_txt.write(f'lbl_dir={lbl_dir}\n')
     path_txt.write(f'class_cat={data_cat}')
@@ -299,8 +299,8 @@ if __name__ == '__main__':
     syn_args = get_args(database, data_folder=data_folder)
     dilate = True
     data_cat = 'WindTurbine'
-    group_syn_object_annotation_to_form_xml(database, syn_args, data_cat) #valid annos 13500 cnt 12087
-    from datasets.config_dataset import cfg_d
+    # group_syn_object_annotation_to_form_xml(database, syn_args, data_cat) #valid annos 13500 cnt 12087
+    from lib.datasets.config_dataset import cfg_d
     seed = cfg_d.DATA_SEED
     split_syn_data_trn_val(seed, database, data_folder, data_cat)
 

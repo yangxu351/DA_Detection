@@ -28,6 +28,11 @@ def parse_args():
                         help='test dataset:REAL_NWPU_C1, xilin_wdt',
                         default=cfg_d.DATABASE_TEST, type=str)                        
     ###########################################################=========end data set
+    # synthetic dataseed
+    #tag: yang adds
+    parser.add_argument('--data_seed', dest='data_seed',
+                        help='synthetic dataseed',
+                        default=cfg_d.DATA_SEED, type=int)
 
     parser.add_argument('--net', dest='net',
                         help='vgg16, res101 res50',

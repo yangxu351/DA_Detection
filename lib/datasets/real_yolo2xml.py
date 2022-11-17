@@ -15,7 +15,7 @@ import pandas as pd
 import shutil
 from PIL import Image
 
-from datasets.object_score_util import get_bbox_coords_from_annos_with_object_score as gbc
+from lib.datasets.object_score_util import get_bbox_coords_from_annos_with_object_score as gbc
 
 IMG_FORMAT = '.jpg'
 TXT_FORMAT = '.txt'
@@ -146,7 +146,7 @@ def split_real_nwpu_background_trn_val(seed=17, data_folder='real_nwpu_c0', data
     bkg_xml_dir = args.real_voc_annos_dir
     print('num_files', num_bkg_all)
     
-    data_txt = open(os.path.join(data_dir, 'path.data'), 'w')
+    data_txt = open(os.path.join(data_dir, f'path.data'), 'w')
     data_txt.write(f'img_dir={bkg_img_dir}\n')
     data_txt.write(f'lbl_dir={bkg_xml_dir}\n')
     data_txt.write(f'class_cat={data_cat}')
@@ -214,7 +214,7 @@ def split_real_data_train_val(data_seed = 0, data_cat='WindTurbine', aug=False):
         val_lbl_f.write("\n".join(val_lbl_files))
         all_f.write("\n".join(val_img_files+train_img_files))
 
-        data_txt = open(os.path.join(args.workdir_data_txt, 'path.data'), 'w')
+        data_txt = open(os.path.join(args.workdir_data_txt, f'path_seed{data_seed}.data'), 'w')
         data_txt.write(f'img_dir={args.real_img_dir}\n')
         data_txt.write(f'lbl_dir={args.real_voc_annos_dir}\n')
         data_txt.write(f'class_cat={data_cat}')
@@ -234,7 +234,7 @@ def split_real_data_train_val(data_seed = 0, data_cat='WindTurbine', aug=False):
             val_aug_img_files.append(os.path.join(args.real_img_aug_dir, img_name))
         val_img_f = open(os.path.join(args.workdir_data_txt, f"val_img_aug_seed{data_seed}.txt"), "w")
         val_lbl_f = open(os.path.join(args.workdir_data_txt, f"val_lbl_aug_seed{data_seed}.txt"), "w")
-        data_txt = open(os.path.join(args.workdir_data_txt, 'path_aug.data'), 'w')
+        data_txt = open(os.path.join(args.workdir_data_txt, f'path_seed{data_seed}_aug.data'), 'w')
         try:
             val_img_f.write("\n".join(val_aug_img_files))
             val_lbl_f.write("\n".join(val_aug_lbl_files))

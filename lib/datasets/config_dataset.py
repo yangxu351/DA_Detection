@@ -13,7 +13,11 @@ __D = edict()
 #   from fast_rcnn_config import cfg
 cfg_d = __D
 
-__D.DATA_SEED = 17
+# __D.DATA_SEED = 17
+# tag: yang changed
+# __D.DATA_SEED = 0
+# __D.DATA_SEED = 1
+__D.DATA_SEED = 2
 # tag: for WDT
 __D.REAL_DATA_SEED = 0
 #

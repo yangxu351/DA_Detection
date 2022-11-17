@@ -19,13 +19,13 @@ import torch
 from torch.autograd import Variable
 import torch.nn as nn
 
-from roi_data_layer.roidb import combined_roidb
-from roi_data_layer.roibatchLoader import roibatchLoader
-from model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
-from model.utils.net_utils import weights_normal_init, save_net, load_net, \
+from lib.roi_data_layer.roidb import combined_roidb
+from lib.roi_data_layer.roibatchLoader import roibatchLoader
+from lib.model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
+from lib.model.utils.net_utils import weights_normal_init, save_net, load_net, \
     adjust_learning_rate, save_checkpoint, clip_gradient, FocalLoss, sampler, calc_supp, EFocalLoss
 
-from model.utils.parser_func import parse_args, set_dataset_args
+from lib.model.utils.parser_func import parse_args, set_dataset_args
 
 def init_seeds(seed=0):
     # tag: https://blog.csdn.net/hxxjxw/article/details/120160135
@@ -80,7 +80,12 @@ if __name__ == '__main__':
 
     #tag: yang changed dir
     time_marker = time.strftime('%Y%m%d_%H%M', time.localtime())
-    output_dir = os.path.join(args.save_dir, args.dataset, args.database, args.net, time_marker)
+    # tag: yang changed
+    if args.data_seed == 17:
+        folder_name = time_marker
+    else:
+        folder_name= time_marker + f'_data_seed{args.data_seed}'
+    output_dir = os.path.join(args.save_dir, args.dataset, args.database, args.net, folder_name)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -119,8 +124,8 @@ if __name__ == '__main__':
         cfg.CUDA = True
 
     # initilize the network here.
-    from model.faster_rcnn.vgg16_global import vgg16
-    from model.faster_rcnn.resnet_global import resnet
+    from lib.model.faster_rcnn.vgg16_global import vgg16
+    from lib.model.faster_rcnn.resnet_global import resnet
 
     if args.net == 'vgg16':
         fasterRCNN = vgg16(imdb.classes, pretrained=True, class_agnostic=args.class_agnostic, gc=args.gc)
@@ -179,7 +184,11 @@ if __name__ == '__main__':
     if args.use_tfboard:
         from tensorboardX import SummaryWriter
         # tag: yang change dir
-        log_dir = os.path.join(args.log_dir, args.dataset, args.database, args.net, time_marker)
+        if args.data_seed == 17:
+            folder_name = time_marker
+        else:
+            folder_name= time_marker + f'_data_seed{args.data_seed}'
+        log_dir = os.path.join(args.log_dir, args.dataset, args.database, args.net, folder_name)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
         logger = SummaryWriter(log_dir)

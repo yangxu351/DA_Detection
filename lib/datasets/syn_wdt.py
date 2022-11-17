@@ -98,7 +98,7 @@ class syn_wdt(imdb):
         return path of images(.png), annos(.xml)
                 class_set='syn_nwpu_c1'
         """
-        data = parse_data_cfg(os.path.join(self._devkit_path, 'path.data'))
+        data = parse_data_cfg(os.path.join(self._devkit_path, f'path_seed{cfg_d.DATA_SEED}.data'))
         return data[key]
 
     def get_img_set_file(self):
